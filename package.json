@@ -1,0 +1,13 @@
+{
+  "name": "com.phun.phengine.core",
+  "displayName": "PhEngine Core",
+  "version": "0.1.1",
+  "description": "PhEngine Core package",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phanphantz/PhEngine.git"
+  },
+  "license": "MIT",
+  "author": "Phun Peeticharoenthum"
+}

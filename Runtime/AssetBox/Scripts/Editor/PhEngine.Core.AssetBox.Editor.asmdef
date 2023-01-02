@@ -1,0 +1,21 @@
+{
+    "name": "PhEngine.Core.AssetBox.Editor",
+    "rootNamespace": "",
+    "references": [
+        "PhEngine.Core.AssetBox",
+        "PhEngine.Core.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
