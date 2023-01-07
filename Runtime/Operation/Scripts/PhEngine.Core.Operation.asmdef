@@ -2,7 +2,8 @@
     "name": "PhEngine.Core.Operation",
     "rootNamespace": "",
     "references": [
-        "PhEngine.Core"
+        "PhEngine.Core",
+        "Unity.EditorCoroutines.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
