@@ -1,8 +1,11 @@
 using System;
 using System.Collections;
-using Unity.EditorCoroutines.Editor;
 using UnityEngine;
 using UnityEngine.Events;
+
+#if UNITY_EDITOR
+using Unity.EditorCoroutines.Editor;
+#endif
 
 namespace PhEngine.Core.Operation
 {
@@ -12,7 +15,10 @@ namespace PhEngine.Core.Operation
         protected MonoBehaviour Host => host;
         MonoBehaviour host;
         Coroutine activeRoutine;
+        
+#if UNITY_EDITOR
         EditorCoroutine activeEditorRoutine;
+#endif        
         
         public float CurrentProgress { get; private set; }
         public TimeSpan ElapsedTime { get; private set; }
@@ -175,7 +181,9 @@ namespace PhEngine.Core.Operation
             }
             else
             {
+#if UNITY_EDITOR
                 activeEditorRoutine = EditorCoroutineUtility.StartCoroutine(routine, host);
+#endif
             }
         }
 
@@ -316,9 +324,11 @@ namespace PhEngine.Core.Operation
             if (host == null)
                 return;
             
+#if UNITY_EDITOR
             if (activeEditorRoutine != null)
                 EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
-            
+#endif
+
             if (activeRoutine != null)
                 host.StopCoroutine(activeRoutine);
             
