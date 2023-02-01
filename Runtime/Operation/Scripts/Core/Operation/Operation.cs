@@ -327,13 +327,14 @@ namespace PhEngine.Core.Operation
 #if UNITY_EDITOR
             if (activeEditorRoutine != null)
                 EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
+            
+            activeEditorRoutine = null;
 #endif
 
             if (activeRoutine != null)
                 host.StopCoroutine(activeRoutine);
             
             activeRoutine = null;
-            activeEditorRoutine = null;
             host = null;
         }
         
