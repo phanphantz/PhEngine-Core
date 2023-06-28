@@ -2,7 +2,7 @@ using System;
 
 namespace PhEngine.Core.Operation
 {
-    public static class OperationActionSetter
+    public static class ActionUtils
     {
         public static Operation SetOnStart(this Operation operation, Action callback)
         {

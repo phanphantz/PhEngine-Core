@@ -150,4 +150,9 @@ namespace PhEngine.Core.Operation
             return (CurrentStepIndex + CurrentStepProgress) / Count;
         }
     }
+    
+    public enum OnStopBehavior
+    {
+        CancelAll, Retry, Restart, Skip
+    }
 }

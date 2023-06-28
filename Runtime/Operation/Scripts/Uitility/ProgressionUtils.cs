@@ -2,7 +2,7 @@ using System;
 
 namespace PhEngine.Core.Operation
 {
-    public static class OperationProgressionSetter
+    public static class ProgressionUtils
     {
         public static Operation DoUntil(this Operation operation, Func<bool> finishCondition)
             => SetProgressOn(operation,() => finishCondition.Invoke() ? 1f : 0f );

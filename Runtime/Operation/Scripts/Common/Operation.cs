@@ -79,7 +79,7 @@ namespace PhEngine.Core.Operation
             ForceRunOn(target);
         }
         
-        public void Restart(MonoBehaviour target)
+        public void RestartOn(MonoBehaviour target)
         {
             if (IsActive)
                 Cancel();
@@ -157,23 +157,6 @@ namespace PhEngine.Core.Operation
             IsFinished = false;
             IsStarted = true;
             CurrentRound++;
-            RunOnHost();
-        }
-        
-        void ResetProgress()
-        {
-            ElapsedTime = TimeSpan.Zero;
-            ForceSetProgress(0);
-        }
-        
-        void ForceSetProgress(float progress)
-        {
-            CurrentProgress = progress;
-            InvokeOnProgress(progress);
-        }
-
-        void RunOnHost()
-        {
             var routine = OperationRoutine(CurrentRound);
             if (Application.isPlaying)
             {
@@ -187,15 +170,16 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        IEnumerator OperationRoutine(int assignedRound)
+        void ResetProgress()
         {
-            yield return StartDelay;
-            InvokeOnStart();
-            if (TryFinishOrKill(assignedRound))
-                yield break;
-            
-            while (!TryFinishOrKill(assignedRound))
-                yield return UpdateRoutine(assignedRound);
+            ElapsedTime = TimeSpan.Zero;
+            ForceSetProgress(0);
+        }
+        
+        void ForceSetProgress(float progress)
+        {
+            CurrentProgress = progress;
+            InvokeOnProgress(progress);
         }
 
         bool TryFinishOrKill(int round)
@@ -212,7 +196,10 @@ namespace PhEngine.Core.Operation
             if (!IsShouldFinish()) 
                 return false;
             
-            TryFinish();
+            if (!IsActive)
+                return true;
+
+            ForceFinish();
             return true;
         }
 
@@ -221,20 +208,13 @@ namespace PhEngine.Core.Operation
             return CurrentProgress >= 1f;
         }
 
-        void TryFinish()
-        {
-            if (!IsActive)
-                return;
-
-            ForceFinish();
-        }
-        
         protected void ForceFinish()
         {
             SetProgress(1f);
             IsFinished = true;
             InvokeOnFinish();
-            TryRepeatAfterFinish();
+            if (RepeatCondition != null && RepeatCondition.Invoke())
+                StartNewRound();
         }
 
         void SetProgress(float progress)
@@ -244,16 +224,18 @@ namespace PhEngine.Core.Operation
 
             ForceSetProgress(progress);
         }
-
-        void TryRepeatAfterFinish()
-        {
-            if (RepeatCondition == null)
-                return;
-            
-            if (RepeatCondition.Invoke())
-                StartNewRound();
-        }
         
+        IEnumerator OperationRoutine(int assignedRound)
+        {
+            yield return StartDelay;
+            InvokeOnStart();
+            if (TryFinishOrKill(assignedRound))
+                yield break;
+            
+            while (!TryFinishOrKill(assignedRound))
+                yield return UpdateRoutine(assignedRound);
+        }
+
         protected virtual IEnumerator UpdateRoutine(int assignRound)
         {
             if (IsPaused)
@@ -285,41 +267,34 @@ namespace PhEngine.Core.Operation
             RefreshProgress();
             if (TryFinishOrKill(assignRound))
                 yield break;
-            
+
             yield return UpdateDelay;
-        }
-        
-        bool IsShouldNotAutoResume()
-        {
-            return AutoResumeCondition == null || !AutoResumeCondition.Invoke();
-        }
-        
-        bool IsShouldAutoPause()
-        {
-            return AutoPauseCondition != null && AutoPauseCondition.Invoke();
-        }
+            
+            void PassTimeByDeltaTime()
+            {
+                var passedTime = Time.deltaTime * TimeScale;
+                ElapsedTime += TimeSpan.FromSeconds(passedTime);
+                InvokeOnTimeChange();
+            }
 
-        void PassTimeByDeltaTime()
-        {
-            var passedTime = Time.deltaTime * TimeScale;
-            ElapsedTime += TimeSpan.FromSeconds(passedTime);
-            InvokeOnTimeChange();
-        }
-
-        void RefreshProgress()
-        {
-            if (ProgressGetter != null)
-                SetProgress(ProgressGetter.Invoke());
+            void RefreshProgress()
+            {
+                if (ProgressGetter != null)
+                    SetProgress(ProgressGetter.Invoke());
+            }
+            
+            bool IsShouldNotAutoResume()
+            {
+                return AutoResumeCondition == null || !AutoResumeCondition.Invoke();
+            }
+        
+            bool IsShouldAutoPause()
+            {
+                return AutoPauseCondition != null && AutoPauseCondition.Invoke();
+            }
         }
 
         protected virtual void ForceCancel()
-        {
-            CancelRunOnHost();
-            ResetProgress();
-            IsStarted = false;
-        }
-        
-        protected void CancelRunOnHost()
         {
             if (host == null)
                 return;
@@ -336,8 +311,10 @@ namespace PhEngine.Core.Operation
             
             activeRoutine = null;
             host = null;
+            ResetProgress();
+            IsStarted = false;
         }
-        
+
         #endregion
 
         #region Invoke
@@ -468,9 +445,13 @@ namespace PhEngine.Core.Operation
 
         #endregion
 
-        public static Operation Do()
+        #region Static Helper Functions
+
+        public static Operation Create()
         {
             return new Operation();
         }
+        
+        #endregion
     }
 }

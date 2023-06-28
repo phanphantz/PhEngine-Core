@@ -2,7 +2,7 @@ using System;
 
 namespace PhEngine.Core.Operation
 {
-    public static class OperationRepeater
+    public static class RepeatUtils
     {
         public static Operation SetRepeatForever(this Operation operation)
             => SetRepeatIf(operation, () => true);
