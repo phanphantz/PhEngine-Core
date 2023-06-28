@@ -180,7 +180,10 @@ namespace PhEngine.Core.Operation
             else
             {
 #if UNITY_EDITOR
-                activeEditorRoutine = EditorCoroutineUtility.StartCoroutine(routine, host);
+                if (host == null)
+                    EditorCoroutineUtility.StartCoroutineOwnerless(routine);
+                else
+                    activeEditorRoutine = EditorCoroutineUtility.StartCoroutine(routine, host);
 #endif
             }
         }
@@ -311,21 +314,21 @@ namespace PhEngine.Core.Operation
 
         protected virtual void ForceCancel()
         {
-            if (host == null)
-                return;
-            
 #if UNITY_EDITOR
             if (activeEditorRoutine != null)
                 EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
             
             activeEditorRoutine = null;
 #endif
-
-            if (activeRoutine != null)
-                host.StopCoroutine(activeRoutine);
+            if (host)
+            {
+                if (activeRoutine != null)
+                    host.StopCoroutine(activeRoutine);
             
-            activeRoutine = null;
-            host = null;
+                activeRoutine = null;
+                host = null;
+            }
+            
             ResetProgress();
             IsStarted = false;
         }

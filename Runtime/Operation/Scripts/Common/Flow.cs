@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace PhEngine.Core.Operation
 {
-    public class Sequence
+    public class Flow
     {
         readonly List<Operation> operationList = new List<Operation>();
 
-        public Sequence()
+        public Flow()
         {
         }
 
@@ -28,16 +28,14 @@ namespace PhEngine.Core.Operation
             return operation;
         }
 
-        public ChainedOperation Run(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
+        public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
         {
-            var operation = CreateChainOperation(stopBehavior);
-            operation.Run();
-            return operation;
+            return operationList.ToArray().RunAsSeries(stopBehavior);
         }
 
-        public ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
+        public void RunAsParallel()
         {
-            return new ChainedOperation(stopBehavior,operationList.ToArray());
+            operationList.ToArray().RunAsParallel();
         }
     }
 }
