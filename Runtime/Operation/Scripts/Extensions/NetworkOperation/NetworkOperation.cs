@@ -10,6 +10,9 @@ namespace PhEngine.Core.Operation
 
         protected NetworkOperation(UnityWebRequest webRequest)
         {
+            if (webRequest == null)
+                throw new ArgumentNullException(nameof(webRequest));
+                
             WebRequest = webRequest;
             OnStart += SendRequest;
             ProgressGetter = GetWebRequestProgress;
@@ -19,12 +22,18 @@ namespace PhEngine.Core.Operation
 
         protected virtual float GetWebRequestProgress()
         {
+            if (WebRequest == null)
+                return 1f;
+            
             return WebRequest.downloadProgress;
         }
 
         protected override bool IsShouldFinish()
         {
-            return base.IsShouldFinish() && WebRequest.isDone;
+            if (WebRequest == null)
+                return true;
+            
+            return WebRequest.isDone;
         }
 
         void SendRequest()
@@ -36,7 +45,13 @@ namespace PhEngine.Core.Operation
         {
             return CreateResultFromWebRequest(WebRequest);
         }
-        
+
+        public override void ProcessResult(T result)
+        {
+            base.ProcessResult(result);
+            WebRequest.Dispose();
+        }
+
         protected virtual bool IsWebRequestHasNoError()
         {
             return string.IsNullOrEmpty(WebRequest.error);

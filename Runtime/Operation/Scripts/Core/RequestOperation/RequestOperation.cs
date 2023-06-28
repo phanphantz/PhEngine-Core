@@ -41,7 +41,7 @@ namespace PhEngine.Core.Operation
         
         #region Invoke
 
-        public void ProcessResult(T result)
+        public virtual void ProcessResult(T result)
         {
             if (IsSuccess())
                 InvokeOnSuccess(result);
