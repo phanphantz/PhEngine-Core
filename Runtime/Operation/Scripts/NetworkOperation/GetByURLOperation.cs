@@ -11,7 +11,7 @@ namespace PhEngine.Core.Operation
 
         protected override T CreateResultFromWebRequest(UnityWebRequest request)
         {
-            return IsWebRequestHasNoError() ? CreateResultFromDownloadHandler(WebRequest.downloadHandler) : default;
+            return IsNetworkOperationSuccess() ? CreateResultFromDownloadHandler(WebRequest.downloadHandler) : default;
         }
 
         protected abstract T CreateResultFromDownloadHandler(DownloadHandler handler);

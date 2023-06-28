@@ -58,6 +58,21 @@ namespace PhEngine.Core.Operation
         public Func<bool> AutoPauseCondition { get; protected set; }
         public Func<bool> AutoResumeCondition { get; protected set; }
 
+        #region Constructors
+
+        public Operation()
+        {
+            ProgressGetter = () => 1f;
+        }
+
+        public Operation(Action action)
+        {
+            OnStart += action;
+            ProgressGetter = () => 1f;
+        }
+        
+        #endregion
+
         #region Control Methods
 
         public void RunOn(MonoBehaviour target)
@@ -450,6 +465,11 @@ namespace PhEngine.Core.Operation
         public static Operation Create()
         {
             return new Operation();
+        }
+
+        public static Operation From(Action action)
+        {
+            return new Operation(action);
         }
         
         #endregion

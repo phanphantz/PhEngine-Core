@@ -8,6 +8,8 @@ namespace PhEngine.Core.Operation
     {
         protected UnityWebRequest WebRequest { get; private set; }
 
+        bool isExpired;
+
         protected NetworkOperation(UnityWebRequest webRequest)
         {
             if (webRequest == null)
@@ -17,12 +19,12 @@ namespace PhEngine.Core.Operation
             OnStart += SendRequest;
             ProgressGetter = GetWebRequestProgress;
             ResultCreation = CreateResult;
-            SuccessCondition = IsWebRequestHasNoError;
+            SuccessCondition = IsNetworkOperationSuccess;
         }
 
         protected virtual float GetWebRequestProgress()
         {
-            if (WebRequest == null)
+            if (isExpired)
                 return 1f;
             
             return WebRequest.downloadProgress;
@@ -30,7 +32,7 @@ namespace PhEngine.Core.Operation
 
         protected override bool IsShouldFinish()
         {
-            if (WebRequest == null)
+            if (isExpired)
                 return true;
             
             return WebRequest.isDone;
@@ -50,9 +52,10 @@ namespace PhEngine.Core.Operation
         {
             base.ProcessResult(result);
             WebRequest.Dispose();
+            isExpired = true;
         }
 
-        protected virtual bool IsWebRequestHasNoError()
+        protected virtual bool IsNetworkOperationSuccess()
         {
             return string.IsNullOrEmpty(WebRequest.error);
         }
