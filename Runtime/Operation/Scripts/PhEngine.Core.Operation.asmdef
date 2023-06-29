@@ -2,9 +2,9 @@
     "name": "PhEngine.Core.Operation",
     "rootNamespace": "",
     "references": [
-        "GUID:9373129bcf882834c826ea3e0242a43b",
-        "GUID:478a2357cc57436488a56e564b08d223",
-        "GUID:adbf1b5132f1d8e41ae2c1e318520cf4"
+        "PhEngine.Core",
+        "Unity.EditorCoroutines.Editor",
+        "PhEngine.Core.JSON"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
