@@ -2,8 +2,8 @@
     "name": "PhEngine.Core.Editor",
     "rootNamespace": "",
     "references": [
-        "PhEngine.Core",
-        "PhEngine.Core.JSON"
+        "GUID:9373129bcf882834c826ea3e0242a43b",
+        "GUID:adbf1b5132f1d8e41ae2c1e318520cf4"
     ],
     "includePlatforms": [
         "Editor"
