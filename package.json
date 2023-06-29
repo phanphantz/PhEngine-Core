@@ -9,7 +9,7 @@
     "url": "https://github.com/phanphantz/PhEngine-Core.git"
   },
   "dependencies": {
-    "com.unity.editorcoroutines": ">=1.0.0"
+    "com.unity.editorcoroutines": "1.0.0"
   },
   "license": "MIT",
   "author": "Phun Peeticharoenthum"
