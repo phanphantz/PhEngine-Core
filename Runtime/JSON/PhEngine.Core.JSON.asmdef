@@ -1,13 +1,8 @@
 {
-    "name": "PhEngine.Core.Editor",
+    "name": "PhEngine.Core.JSON",
     "rootNamespace": "",
-    "references": [
-        "PhEngine.Core",
-        "PhEngine.Core.JSON"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "references": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
