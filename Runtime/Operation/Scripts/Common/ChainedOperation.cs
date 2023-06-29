@@ -20,7 +20,8 @@ namespace PhEngine.Core.Operation
         public float CurrentStepProgress { get; private set; }
         public int CurrentStepIndex { get; private set; }
 
-        public event Action OnAfterFail;
+        public event Action OnAnyFail;
+        public event Action OnCompleteAll;
 
         T CurrentOperation
         {
@@ -65,7 +66,10 @@ namespace PhEngine.Core.Operation
         {
             var currentOperation = CurrentOperation;
             if (currentOperation == null)
+            {
+                OnCompleteAll?.Invoke();
                 return;
+            }
             
             currentOperation.RunOn(Host);
         }
@@ -102,7 +106,7 @@ namespace PhEngine.Core.Operation
         void NotifyFailure()
         {
             NotifyStopping();
-            OnAfterFail?.Invoke();
+            OnAnyFail?.Invoke();
         }
 
         protected void NotifyStopping()
@@ -165,5 +169,32 @@ namespace PhEngine.Core.Operation
     public enum OnStopBehavior
     {
         CancelAll, Retry, Restart, Skip
+    }
+
+    public static class ChainedOperationExtensions
+    {
+        public static ChainedOperation SetOnAnyFail(this ChainedOperation operation, Action onAfterFail)
+        {
+            operation.OnAnyFail += onAfterFail;
+            return operation;
+        }
+        
+        public static ChainedOperation SetOnCompleteAll(this ChainedOperation operation, Action onCompleteAll) 
+        {
+            operation.OnCompleteAll += onCompleteAll;
+            return operation;
+        }
+        
+        public static ChainedOperation<T> SetOnAnyFail<T>(this ChainedOperation<T> operation, Action onAfterFail) where T : Operation
+        {
+            operation.OnAnyFail += onAfterFail;
+            return operation;
+        }
+        
+        public static ChainedOperation<T> SetOnCompleteAll<T>(this ChainedOperation<T> operation, Action onCompleteAll) where T : Operation
+        {
+            operation.OnCompleteAll += onCompleteAll;
+            return operation;
+        }
     }
 }

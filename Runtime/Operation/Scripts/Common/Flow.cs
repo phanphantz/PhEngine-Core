@@ -7,6 +7,9 @@ namespace PhEngine.Core.Operation
     {
         readonly List<Operation> operationList = new List<Operation>();
 
+        public event Action OnAnyFail;
+        public event Action OnCompleteAll;
+
         public Flow()
         {
         }
@@ -30,7 +33,10 @@ namespace PhEngine.Core.Operation
 
         public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
         {
-            return operationList.ToArray().RunAsSeries(stopBehavior);
+            var chainedOperation = operationList.ToArray().RunAsSeries(stopBehavior);
+            chainedOperation.OnAnyFail += OnAnyFail;
+            chainedOperation.OnCompleteAll += OnCompleteAll;
+            return chainedOperation;
         }
 
         public void RunAsParallel()
