@@ -20,6 +20,8 @@ namespace PhEngine.Core.Operation
         public float CurrentStepProgress { get; private set; }
         public int CurrentStepIndex { get; private set; }
 
+        public event Action OnAfterFail;
+
         T CurrentOperation
         {
             get
@@ -89,12 +91,18 @@ namespace PhEngine.Core.Operation
             operation.OnProgress += RefreshStepProgress;
             operation.OnCancel += NotifyStopping;
             if (operation is IRequestOperation requestOperation)
-                requestOperation.AppendOnFail(NotifyStopping);
+                requestOperation.AppendOnFail(NotifyFailure);
         }
 
         void RefreshStepProgress(float progress)
         {
             CurrentStepProgress = progress;
+        }
+
+        void NotifyFailure()
+        {
+            NotifyStopping();
+            OnAfterFail?.Invoke();
         }
 
         protected void NotifyStopping()
