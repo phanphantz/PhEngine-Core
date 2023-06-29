@@ -12,14 +12,16 @@ namespace PhEngine.Core.Operation
 
         protected NetworkOperation(UnityWebRequest webRequest)
         {
-            if (webRequest == null)
-                throw new ArgumentNullException(nameof(webRequest));
-                
-            WebRequest = webRequest;
+            AssignWebRequest(webRequest);
             OnStart += SendRequest;
             ProgressGetter = GetWebRequestProgress;
             ResultCreation = CreateResult;
             SuccessCondition = IsNetworkOperationSuccess;
+        }
+
+        protected void AssignWebRequest(UnityWebRequest webRequest)
+        {
+            WebRequest = webRequest;
         }
 
         protected virtual float GetWebRequestProgress()

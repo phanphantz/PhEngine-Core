@@ -180,7 +180,7 @@ namespace PhEngine.Core.Operation
 
         #region Work Cycle Logic
 
-        void ForceRunOn(MonoBehaviour target)
+        protected virtual void ForceRunOn(MonoBehaviour target)
         {
             host = target;
             StartNewRound();
