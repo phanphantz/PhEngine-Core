@@ -13,7 +13,7 @@ namespace PhEngine.Core.Operation
         static bool IsShouldRepeatBecauseRepeatQuota(Operation operation, int repeatCount)
         {
             return repeatCount > 0 
-                   && operation.CurrentRound < 1 + repeatCount;
+                   && operation.CurrentRound < repeatCount;
         }
 
         public static Operation SetRepeatUntil(this Operation operation, Func<bool> stopCondition)

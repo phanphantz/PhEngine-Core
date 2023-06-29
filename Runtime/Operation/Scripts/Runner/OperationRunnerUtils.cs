@@ -14,12 +14,7 @@ namespace PhEngine.Core.Operation
                 return MasterOperationRunner.Instance;
             }
         }
-        
-        public static void RunIfNotActive(this Operation operation)
-        {
-            MasterTarget.RunIfNotActive(operation);
-        }
-        
+
         public static void Run(this Operation operation)
         {
             operation.RunOn(MasterTarget);
@@ -48,11 +43,6 @@ namespace PhEngine.Core.Operation
         public static void RunAsParallel<T>(this T[] operations) where T : Operation
         {
             MasterTarget.RunAsParallel<Operation>(operations);
-        }
-        
-        public static void RunIfNotActive(this MonoBehaviour target, Operation operation)
-        {
-            operation.RunOnIfNotActive(target);
         }
         
         public static void Run(this MonoBehaviour target, Operation operation)

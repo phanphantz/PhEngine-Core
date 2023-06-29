@@ -6,13 +6,18 @@ namespace PhEngine.Core.Operation
 {
     public class DownloadFileOperation : NetworkOperation<DownloadFileResult>
     {
-        DownloadFileRequest Request { get; }
+        public DownloadFileRequest Request { get; }
 
-        public DownloadFileOperation(DownloadFileRequest request) : base(UnityWebRequest.Get(request.Url))
+        public DownloadFileOperation(DownloadFileRequest request)
         {
             Request = request;
             OnSuccess += WriteDownloadedBytesToLocal;
             OnFail += ReportDownloadFailed;
+        }
+
+        protected override UnityWebRequest CreateWebRequest()
+        {
+            return UnityWebRequest.Get(Request.Url);
         }
 
         protected override DownloadFileResult CreateResultFromWebRequest(UnityWebRequest request)

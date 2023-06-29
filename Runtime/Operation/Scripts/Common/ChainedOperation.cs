@@ -146,6 +146,9 @@ namespace PhEngine.Core.Operation
 
         protected void RunNextOperation()
         {
+            if (CurrentOperation.IsShouldRepeat())
+                return;
+            
             CurrentStepIndex++;
             RunCurrentOperation();
         }

@@ -7,13 +7,18 @@ namespace PhEngine.Core.Operation
     {
         string Url { get; }
 
-        public GetTextureByURLOperation(string url) : base(UnityWebRequestTexture.GetTexture(url))
+        public GetTextureByURLOperation(string url)
         {
             Url = url;
             OnSuccess += ReportDownloadSuccess;
             OnFail += ReportDownloadFailed;
         }
-        
+
+        protected override UnityWebRequest CreateWebRequest()
+        {
+            return UnityWebRequestTexture.GetTexture(Url);
+        }
+
         void ReportDownloadSuccess(Texture texture)
         {
             Debug.Log("Get Texture Successful! from URL : " + Url);

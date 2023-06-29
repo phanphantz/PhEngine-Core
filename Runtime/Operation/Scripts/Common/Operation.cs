@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 #if UNITY_EDITOR && EDITOR_COROUTINE
 using Unity.EditorCoroutines.Editor;
@@ -78,16 +77,23 @@ namespace PhEngine.Core.Operation
         float? startTimeFromStartup;
         float? endTimeFromStartup;
 
+        bool isRunningAsExternalCoroutine;
+
         #region Constructors
 
         public Operation()
         {
-            ProgressGetter = () => 1f;
+            TreatAsAction();
         }
-
+        
         public Operation(Action action)
         {
             OnStart += action;
+            TreatAsAction();
+        }
+        
+        void TreatAsAction()
+        {
             ProgressGetter = () => 1f;
         }
         
@@ -95,25 +101,50 @@ namespace PhEngine.Core.Operation
 
         #region Control Methods
 
-        public void RunOn(MonoBehaviour target)
+        public virtual void RunOn(MonoBehaviour target)
         {
+            if (!TryStart())
+                return;
+
+            host = target;
+            var routine = ProcessRoutine(CurrentRound);
+            if (Application.isPlaying && host)
+            {
+                activeRoutine = host.StartCoroutine(routine);
+            }
+            else
+            {
+#if UNITY_EDITOR && EDITOR_COROUTINE
+                if (host == null)
+                    EditorCoroutineUtility.StartCoroutineOwnerless(routine);
+                else
+                    activeEditorRoutine = EditorCoroutineUtility.StartCoroutine(routine, host);
+#else
+                throw new ArgumentNullException(nameof(target));
+#endif
+            }
+        }
+
+        bool TryStart()
+        {
+            isRunningAsExternalCoroutine = false;
             if (IsActive)
             {
                 Debug.LogWarning("Cannot run operation that is already started.");
-                return;
+                return false;
             }
-            
-            ForceRunOn(target);
+
+            ResetProgress();
+            IsFinished = false;
+            IsStarted = true;
+            StartTime = GetCurrentDeviceTime();
+            startTimeFromStartup = Time.realtimeSinceStartup;
+            endTimeFromStartup = null;
+            EndTime = null;
+            CurrentRound++;
+            return true;
         }
 
-        public void RunOnIfNotActive(MonoBehaviour target)
-        {
-            if (IsActive)
-                return;
-            
-            ForceRunOn(target);
-        }
-        
         public void RestartOn(MonoBehaviour target)
         {
             if (IsActive)
@@ -180,48 +211,30 @@ namespace PhEngine.Core.Operation
 
         #region Work Cycle Logic
 
-        protected virtual void ForceRunOn(MonoBehaviour target)
+        public IEnumerator Coroutine()
         {
-            host = target;
-            StartNewRound();
-        }
+            while (IsShouldRepeat() || !isRunningAsExternalCoroutine)
+            {
+                if (!TryStart())
+                    yield break;
 
-        void StartNewRound()
-        {
-            ResetProgress();
-            IsFinished = false;
-            IsStarted = true;
-            StartTimers();
-            CurrentRound++;
-            var routine = OperationRoutine(CurrentRound);
-            if (Application.isPlaying)
-            {
-                activeRoutine = host.StartCoroutine(routine);
-            }
-            else
-            {
-#if UNITY_EDITOR && EDITOR_COROUTINE
-                if (host == null)
-                    EditorCoroutineUtility.StartCoroutineOwnerless(routine);
-                else
-                    activeEditorRoutine = EditorCoroutineUtility.StartCoroutine(routine, host);
-#endif
+                isRunningAsExternalCoroutine = true;
+                yield return ProcessRoutine(CurrentRound);
             }
         }
-
-        void StartTimers()
+        
+        IEnumerator ProcessRoutine(int assignedRound)
         {
-            StartTime = GetCurrentDeviceTime();
-            startTimeFromStartup = Time.realtimeSinceStartup;
-            endTimeFromStartup = null;
-            EndTime = null;
+            yield return StartDelay;
+            InvokeOnStart();
+            
+            if (TryFinishOrKill(assignedRound))
+                yield break;
+            
+            while (!TryFinishOrKill(assignedRound))
+                yield return UpdateRoutine(assignedRound);
         }
-
-        static DateTime GetCurrentDeviceTime()
-        {
-            return DateTimeFormat == DateTimeFormat.UTC ? DateTime.UtcNow : DateTime.Now;
-        }
-
+        
         void ResetProgress()
         {
             ElapsedDeltaTime = TimeSpan.Zero;
@@ -232,6 +245,11 @@ namespace PhEngine.Core.Operation
         {
             CurrentProgress = progress;
             InvokeOnProgress(progress);
+        }
+        
+        static DateTime GetCurrentDeviceTime()
+        {
+            return DateTimeFormat == DateTimeFormat.UTC ? DateTime.UtcNow : DateTime.Now;
         }
 
         bool TryFinishOrKill(int round)
@@ -264,16 +282,16 @@ namespace PhEngine.Core.Operation
         {
             SetProgress(1f);
             IsFinished = true;
-            StopTimers();
-            InvokeOnFinish();
-            if (RepeatCondition != null && RepeatCondition.Invoke())
-                StartNewRound();
-        }
-
-        void StopTimers()
-        {
             EndTime = GetCurrentDeviceTime();
             endTimeFromStartup = Time.realtimeSinceStartup;
+            InvokeOnFinish();
+            if (IsShouldRepeat() && !isRunningAsExternalCoroutine)
+                RunOn(Host);
+        }
+
+        public bool IsShouldRepeat()
+        {
+            return RepeatCondition != null && RepeatCondition.Invoke();
         }
 
         void SetProgress(float progress)
@@ -284,17 +302,6 @@ namespace PhEngine.Core.Operation
             ForceSetProgress(progress);
         }
         
-        IEnumerator OperationRoutine(int assignedRound)
-        {
-            yield return StartDelay;
-            InvokeOnStart();
-            if (TryFinishOrKill(assignedRound))
-                yield break;
-            
-            while (!TryFinishOrKill(assignedRound))
-                yield return UpdateRoutine(assignedRound);
-        }
-
         protected virtual IEnumerator UpdateRoutine(int assignRound)
         {
             if (IsPaused)
@@ -370,17 +377,11 @@ namespace PhEngine.Core.Operation
                 host = null;
             }
             
-            ResetProgress();
-            IsStarted = false;
-            ResetTimers();
-        }
-
-        void ResetTimers()
-        {
             StartTime = null;
             startTimeFromStartup = null;
             endTimeFromStartup = null;
             EndTime = null;
+            IsStarted = false;
         }
 
         #endregion

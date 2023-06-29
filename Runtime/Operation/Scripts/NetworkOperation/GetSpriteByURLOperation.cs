@@ -5,15 +5,20 @@ namespace PhEngine.Core.Operation
 {
     public class GetSpriteByURLOperation : NetworkOperation<Sprite>
     {
-        string Url { get; }
+        public string Url { get; }
 
-        public GetSpriteByURLOperation(string url) : base(UnityWebRequestTexture.GetTexture(url))
+        public GetSpriteByURLOperation(string url)
         {
             Url = url;
             OnSuccess += ReportDownloadSuccess;
             OnFail += ReportDownloadFailed;
         }
-        
+
+        protected override UnityWebRequest CreateWebRequest()
+        {
+            return UnityWebRequestTexture.GetTexture(Url);
+        }
+
         void ReportDownloadSuccess(Sprite texture)
         {
             Debug.Log("Get Sprite Successful! from URL : " + Url);

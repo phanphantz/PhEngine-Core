@@ -5,8 +5,15 @@ namespace PhEngine.Core.Operation
 {
     public abstract class GetByURLOperation<T> : NetworkOperation<T>
     {
-        protected GetByURLOperation(string url) : base(UnityWebRequest.Get(url))
+        public string Url { get; }
+        protected GetByURLOperation(string url)
         {
+            Url = url;
+        }
+
+        protected override UnityWebRequest CreateWebRequest()
+        {
+            return UnityWebRequest.Get(Url);
         }
 
         protected override T CreateResultFromWebRequest(UnityWebRequest request)
