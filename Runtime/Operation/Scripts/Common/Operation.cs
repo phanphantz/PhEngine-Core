@@ -221,6 +221,7 @@ namespace PhEngine.Core.Operation
                 isRunningAsExternalCoroutine = true;
                 yield return ProcessRoutine(CurrentRound);
             }
+            CurrentRound = 0;
         }
         
         IEnumerator ProcessRoutine(int assignedRound)
@@ -285,8 +286,18 @@ namespace PhEngine.Core.Operation
             EndTime = GetCurrentDeviceTime();
             endTimeFromStartup = Time.realtimeSinceStartup;
             InvokeOnFinish();
-            if (IsShouldRepeat() && !isRunningAsExternalCoroutine)
+            TryRepeatIfWasRunByHost();
+        }
+
+        void TryRepeatIfWasRunByHost()
+        {
+            if (isRunningAsExternalCoroutine)
+                return;
+
+            if (IsShouldRepeat())
                 RunOn(Host);
+            else
+                CurrentRound = 0;
         }
 
         public bool IsShouldRepeat()
