@@ -34,8 +34,8 @@ namespace PhEngine.Core.Operation
         public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
         {
             var chainedOperation = operationList.ToArray().RunAsSeries(stopBehavior);
-            chainedOperation.OnAnyFail += OnAnyFail;
-            chainedOperation.OnCompleteAll += OnCompleteAll;
+            chainedOperation.OnCancel += OnAnyFail;
+            chainedOperation.OnFinish += OnCompleteAll;
             return chainedOperation;
         }
 
