@@ -13,11 +13,11 @@ namespace PhEngine.Core.Operation
         public static Operation AddProgressBy(this Operation operation, Func<float> progressAdder)
             => SetProgressOn(operation,() => operation.CurrentProgress + progressAdder.Invoke());
 
-        public static Operation DoFor(this Operation operation, TimeSpan duration)
-            => SetProgressOn(operation,() => GetProgressScaleFromTime(operation, duration));
+        public static Operation DoFor(this Operation operation, TimeSpan duration, bool isUseRealTime)
+            => SetProgressOn(operation,() => GetProgressScaleFromTime(operation, duration, isUseRealTime));
 
-        static float GetProgressScaleFromTime(Operation operation, TimeSpan duration)
-            => (float)(operation.ElapsedTime.TotalSeconds / duration.TotalSeconds);
+        static float GetProgressScaleFromTime(Operation operation, TimeSpan duration, bool isUseRealTime)
+            => (float)((isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime).TotalSeconds / duration.TotalSeconds);
         
         public static Operation ClearProgression(this Operation operation)
             => SetProgressOn(operation,null);

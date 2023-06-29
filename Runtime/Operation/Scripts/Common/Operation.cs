@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using Unity.EditorCoroutines.Editor;
@@ -12,26 +13,42 @@ namespace PhEngine.Core.Operation
     [Serializable]
     public class Operation
     {
+        public static DateTimeFormat DateTimeFormat { get; set; } = DateTimeFormat.UTC;
         protected MonoBehaviour Host => host;
         MonoBehaviour host;
         Coroutine activeRoutine;
         
 #if UNITY_EDITOR
         EditorCoroutine activeEditorRoutine;
-#endif        
-        
+#endif
         public float CurrentProgress { get; private set; }
-        public TimeSpan ElapsedTime { get; private set; }
+        public TimeSpan ElapsedDeltaTime { get; private set; }
+        public TimeSpan ElapsedRealTime
+        {
+            get
+            {
+                if (!startTimeFromStartup.HasValue)
+                    return TimeSpan.Zero;
+
+                if (endTimeFromStartup.HasValue)
+                    return TimeSpan.FromSeconds(endTimeFromStartup.Value - startTimeFromStartup.Value);
+                
+                return TimeSpan.FromSeconds(Time.realtimeSinceStartup - startTimeFromStartup.Value);
+            }
+        }
+        
+        public DateTime? StartTime { get; private set; }
+        public DateTime? EndTime { get; private set; }
         public int CurrentRound { get; private set; }
         public float TimeScale { get; private set; } = 1f;
-        
+
         public bool IsActive => IsStarted && !IsFinished;
         public bool IsStarted { get; private set; }
         public bool IsFinished { get; private set; }
         public bool IsPaused { get; private set; }
-        
+
         public event Action<float> OnProgress;
-        public event Action<TimeSpan> OnTimeChange;
+        public event Action<TimeSpan> OnElapsedDeltaTime;
         public event Action OnStart;
         public event Action OnUpdate;
         public event Action OnPause;
@@ -43,7 +60,7 @@ namespace PhEngine.Core.Operation
         public UnityEvent onStartEvent = new UnityEvent();
         public UnityEvent onUpdateEvent = new UnityEvent();
         public UnityEvent<float> onProgressEvent = new UnityEvent<float>();
-        public UnityEvent<TimeSpan> onTimeChangeEvent = new UnityEvent<TimeSpan>();
+        public UnityEvent<TimeSpan> onElapsedDeltaTimeEvent = new UnityEvent<TimeSpan>();
         public UnityEvent onFinishEvent = new UnityEvent();
         public UnityEvent onCancelEvent = new UnityEvent();
         public UnityEvent onPauseEvent = new UnityEvent();
@@ -57,6 +74,9 @@ namespace PhEngine.Core.Operation
         public Func<bool> RepeatCondition { get; protected set; }
         public Func<bool> AutoPauseCondition { get; protected set; }
         public Func<bool> AutoResumeCondition { get; protected set; }
+
+        float? startTimeFromStartup;
+        float? endTimeFromStartup;
 
         #region Constructors
 
@@ -171,6 +191,7 @@ namespace PhEngine.Core.Operation
             ResetProgress();
             IsFinished = false;
             IsStarted = true;
+            StartTimers();
             CurrentRound++;
             var routine = OperationRoutine(CurrentRound);
             if (Application.isPlaying)
@@ -188,9 +209,22 @@ namespace PhEngine.Core.Operation
             }
         }
 
+        void StartTimers()
+        {
+            StartTime = GetCurrentDeviceTime();
+            startTimeFromStartup = Time.realtimeSinceStartup;
+            endTimeFromStartup = null;
+            EndTime = null;
+        }
+
+        static DateTime GetCurrentDeviceTime()
+        {
+            return DateTimeFormat == DateTimeFormat.UTC ? DateTime.UtcNow : DateTime.Now;
+        }
+
         void ResetProgress()
         {
-            ElapsedTime = TimeSpan.Zero;
+            ElapsedDeltaTime = TimeSpan.Zero;
             ForceSetProgress(0);
         }
         
@@ -230,9 +264,16 @@ namespace PhEngine.Core.Operation
         {
             SetProgress(1f);
             IsFinished = true;
+            StopTimers();
             InvokeOnFinish();
             if (RepeatCondition != null && RepeatCondition.Invoke())
                 StartNewRound();
+        }
+
+        void StopTimers()
+        {
+            EndTime = GetCurrentDeviceTime();
+            endTimeFromStartup = Time.realtimeSinceStartup;
         }
 
         void SetProgress(float progress)
@@ -291,8 +332,8 @@ namespace PhEngine.Core.Operation
             void PassTimeByDeltaTime()
             {
                 var passedTime = Time.deltaTime * TimeScale;
-                ElapsedTime += TimeSpan.FromSeconds(passedTime);
-                InvokeOnTimeChange();
+                ElapsedDeltaTime += TimeSpan.FromSeconds(passedTime);
+                InvokeOnDeltaTimeChange();
             }
 
             void RefreshProgress()
@@ -331,6 +372,15 @@ namespace PhEngine.Core.Operation
             
             ResetProgress();
             IsStarted = false;
+            ResetTimers();
+        }
+
+        void ResetTimers()
+        {
+            StartTime = null;
+            startTimeFromStartup = null;
+            endTimeFromStartup = null;
+            EndTime = null;
         }
 
         #endregion
@@ -349,10 +399,10 @@ namespace PhEngine.Core.Operation
             onUpdateEvent?.Invoke();
         }
         
-        public void InvokeOnTimeChange()
+        public void InvokeOnDeltaTimeChange()
         {
-            OnTimeChange?.Invoke(ElapsedTime);
-            onTimeChangeEvent?.Invoke(ElapsedTime);
+            OnElapsedDeltaTime?.Invoke(ElapsedDeltaTime);
+            onElapsedDeltaTimeEvent?.Invoke(ElapsedDeltaTime);
         }
         
         public void InvokeOnProgress(float progress)
@@ -401,7 +451,7 @@ namespace PhEngine.Core.Operation
         
         internal void SetOnTimeChange(Action<TimeSpan> callback)
         {
-            OnTimeChange = callback;
+            OnElapsedDeltaTime = callback;
         }
 
         internal void SetOnProgress(Action<float> callback)
@@ -476,5 +526,10 @@ namespace PhEngine.Core.Operation
         }
         
         #endregion
+    }
+
+    public enum DateTimeFormat
+    {
+        UTC, Local
     }
 }

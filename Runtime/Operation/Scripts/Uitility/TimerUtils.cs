@@ -50,10 +50,11 @@ namespace PhEngine.Core.Operation
             return operation;
         }
         
-        public static Operation SetExpireAfter(this Operation operation, TimeSpan durationBeforeExpire)
+        public static Operation SetExpireAfter(this Operation operation, TimeSpan durationBeforeExpire, bool isUseRealTime)
         {
-            var expireTime = operation.ElapsedTime + durationBeforeExpire;
-            return SetExpireIf(operation, () => operation.ElapsedTime >= expireTime);
+            var elapsedTime = isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime;
+            var expireTime = elapsedTime + durationBeforeExpire;
+            return SetExpireIf(operation, () => (isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime) >= expireTime);
         }
 
         public static Operation ClearExpiration(this Operation operation)
