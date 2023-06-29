@@ -43,7 +43,7 @@ namespace PhEngine.Core.AssetBox
 
         static bool IsInstantiatable(T assetAsType)
         {
-            return assetAsType is GameObject or Component;
+            return (assetAsType is GameObject || assetAsType is Component);
         }
 
         T Instantiate(T assetAsType, bool isInstantiateInWorldSpace)

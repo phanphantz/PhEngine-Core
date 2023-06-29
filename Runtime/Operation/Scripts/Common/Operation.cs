@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && EDITOR_COROUTINE
 using Unity.EditorCoroutines.Editor;
 #endif
 
@@ -18,7 +18,7 @@ namespace PhEngine.Core.Operation
         MonoBehaviour host;
         Coroutine activeRoutine;
         
-#if UNITY_EDITOR
+#if UNITY_EDITOR && EDITOR_COROUTINE
         EditorCoroutine activeEditorRoutine;
 #endif
         public float CurrentProgress { get; private set; }
@@ -200,7 +200,7 @@ namespace PhEngine.Core.Operation
             }
             else
             {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && EDITOR_COROUTINE
                 if (host == null)
                     EditorCoroutineUtility.StartCoroutineOwnerless(routine);
                 else
@@ -355,7 +355,7 @@ namespace PhEngine.Core.Operation
 
         protected virtual void ForceCancel()
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && EDITOR_COROUTINE
             if (activeEditorRoutine != null)
                 EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
             
