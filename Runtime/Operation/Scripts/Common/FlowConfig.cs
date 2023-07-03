@@ -10,7 +10,7 @@ namespace PhEngine.Core.Operation
         public void RunAsSeries()
         {
             var flow = Create();
-            flow.Run();
+            flow.RunAsSeries();
         }
     }
 }
