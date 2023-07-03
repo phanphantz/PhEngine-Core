@@ -6,11 +6,16 @@ namespace PhEngine.Core.Operation
     {
         public abstract Flow Create();
 
-        [ContextMenu(nameof(RunAsSeries))]
-        public void RunAsSeries()
+        [ContextMenu("Test")]
+        public void Test()
+        {
+            RunAsSeries();
+        }
+        
+        public ChainedOperation RunAsSeries()
         {
             var flow = Create();
-            flow.RunAsSeries();
+            return flow.RunAsSeries();
         }
     }
 }
