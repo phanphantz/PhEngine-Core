@@ -31,6 +31,9 @@ namespace PhEngine.Core.Operation
 
         protected override Texture CreateResultFromWebRequest(UnityWebRequest request)
         {
+            if (request.error != null)
+                return null;
+
             return ((DownloadHandlerTexture) request.downloadHandler).texture;
         }
     }

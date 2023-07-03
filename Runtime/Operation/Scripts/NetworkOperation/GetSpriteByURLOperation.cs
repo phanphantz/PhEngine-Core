@@ -31,6 +31,9 @@ namespace PhEngine.Core.Operation
 
         protected override Sprite CreateResultFromWebRequest(UnityWebRequest request)
         {
+            if (request.error != null)
+                return null;
+            
             var texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
             return SpriteCreator.CreateFromTexture(texture);
         }
