@@ -5,21 +5,31 @@ namespace PhEngine.Core.Operation
 {
     public interface IRequestOperation
     {
-        internal void AppendOnFail(Action callback);
-        internal void AppendOnSuccess(Action callback);
+        internal void AppendOnFailOneShot(Action callback);
+        internal void AppendOnSuccessOneShot(Action callback);
     }
     
     [Serializable]
     public class RequestOperation<T> : Operation, IRequestOperation
     {
-        void IRequestOperation.AppendOnFail(Action callback)
+        void IRequestOperation.AppendOnFailOneShot(Action callback)
         {
-            OnFail += (val) => callback.Invoke();
+            OnFail += CallOneTime;
+            void CallOneTime(T val)
+            {
+                callback.Invoke();
+                OnFail -= CallOneTime;
+            }
         }
 
-        void IRequestOperation.AppendOnSuccess(Action callback)
+        void IRequestOperation.AppendOnSuccessOneShot(Action callback)
         {
-            OnSuccess += (val) => callback.Invoke();
+            OnSuccess += CallOneTime;
+            void CallOneTime(T val)
+            {
+                callback.Invoke();
+                OnSuccess -= CallOneTime;
+            }
         }
         
         public event Action<T> OnSuccess;

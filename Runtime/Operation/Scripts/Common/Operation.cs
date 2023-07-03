@@ -79,6 +79,11 @@ namespace PhEngine.Core.Operation
 
         bool isRunningAsExternalCoroutine;
 
+        public Operation(Operation operation)
+        {
+      
+        }
+
         #region Constructors
 
         public Operation()

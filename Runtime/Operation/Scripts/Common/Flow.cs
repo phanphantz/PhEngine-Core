@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace PhEngine.Core.Operation
@@ -49,15 +50,38 @@ namespace PhEngine.Core.Operation
 
         public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
         {
-            var chainedOperation = operationList.ToArray().RunAsSeries(stopBehavior);
+            var chainedOperation = CreateChainOperation(stopBehavior);
+            chainedOperation.Run();
+            return chainedOperation;
+        }
+
+        public IEnumerator AsChainedCoroutine(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll) =>
+            CreateChainOperation(stopBehavior).Coroutine();
+
+        public ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior)
+        {
+            var chainedOperation = new ChainedOperation(stopBehavior, operationList.ToArray());
             chainedOperation.OnCancel += OnAnyFail;
             chainedOperation.OnFinish += OnCompleteAll;
             return chainedOperation;
         }
+        
+        public IEnumerator AsParallelCoroutine(OnStopBehavior stopBehavior = OnStopBehavior.Skip) =>
+            CreateParallelOperation(stopBehavior).Coroutine();
 
-        public void RunAsParallel()
+        public ParallelOperation RunAsParallel(OnStopBehavior stopBehavior = OnStopBehavior.Skip)
         {
-            operationList.ToArray().RunAsParallel();
+            var parallelOperation = CreateParallelOperation(stopBehavior);
+            parallelOperation.Run();
+            return parallelOperation;
+        }
+        
+        public ParallelOperation CreateParallelOperation(OnStopBehavior stopBehavior)
+        {
+            var parallelOperation = new ParallelOperation(stopBehavior, operationList.ToArray());
+            parallelOperation.OnCancel += OnAnyFail;
+            parallelOperation.OnFinish += OnCompleteAll;
+            return parallelOperation;
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace PhEngine.Core.Operation
 {
@@ -10,13 +9,10 @@ namespace PhEngine.Core.Operation
         {
         }
     }
-    
+
     [Serializable]
-    public class ChainedOperation<T> : Operation where T : Operation
+    public class ChainedOperation<T> : GroupedOperation<T> where T : Operation
     {
-        [SerializeField] T[] operations;
-        [SerializeField] OnStopBehavior onStopBehavior;
-        public int Count { get; private set; }
         public float CurrentStepProgress { get; private set; }
         public int CurrentStepIndex { get; private set; }
         
@@ -24,82 +20,44 @@ namespace PhEngine.Core.Operation
         {
             get
             {
-                if (CurrentStepIndex >= operations.Length)
+                if (CurrentStepIndex >= Operations.Length)
                     return default;
                 
-                return operations[CurrentStepIndex];
+                return Operations[CurrentStepIndex];
             }
         }
 
-        public ChainedOperation(OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params T[] operations)
+        public ChainedOperation(OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params T[] operations) : base (onStopBehavior, operations)
         {
-            SetOperations(operations);
-            SetOnStopBehavior(onStopBehavior);
             OnStart += RunFirstOperation;
             OnCancel += CancelCurrentOperation;
-            BindStepBasedActionsToAllOperations();
-            ChainAllOperationsByOnFinish();
-            ProgressGetter = GetProgress;
         }
-
-        public void SetOnStopBehavior(OnStopBehavior value)
-        {
-            onStopBehavior = value;
-        }
-
-        public void SetOperations(params T[] values)
-        {
-            operations = values;
-            Count = operations.Length;
-        }
-
+        
         void RunFirstOperation()
         {
+            ChainAllOperationsByOnFinish();
             CurrentStepIndex = 0;
             RunCurrentOperation();
         }
         
         void RunCurrentOperation()
         {
-            var currentOperation = CurrentOperation;
-            if (currentOperation == null)
-                return;
-
-            currentOperation.RunOn(Host);
+            CurrentOperation?.RunOn(Host);
         }
 
         void CancelCurrentOperation()
         {
-            var currentOperation = CurrentOperation;
-            if (currentOperation == null)
-                return;
-            
-            currentOperation.OnCancel -= NotifyStopping;
-            currentOperation.Cancel();
+            CurrentOperation?.Cancel();
         }
 
-        void BindStepBasedActionsToAllOperations()
-        {
-            foreach (var operation in operations)
-                BindStepBasedActions(operation);
-        }
-
-        protected virtual void BindStepBasedActions(T operation)
-        {
-            operation.OnProgress += RefreshStepProgress;
-            operation.OnCancel += NotifyStopping;
-            if (operation is IRequestOperation requestOperation)
-                requestOperation.AppendOnFail(NotifyStopping);
-        }
-
-        void RefreshStepProgress(float progress)
+        protected override void RefreshStepProgress(float progress)
         {
             CurrentStepProgress = progress;
         }
 
-        protected void NotifyStopping()
+        protected override void NotifyStopping()
         {
-            switch (onStopBehavior)
+            switch (OnStopBehavior)
             {
                 case OnStopBehavior.Retry:
                     RunCurrentOperation();
@@ -121,41 +79,44 @@ namespace PhEngine.Core.Operation
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        void ChainAllOperationsByOnFinish()
-        {
-            for (var i = 0; i < operations.Length - 1; i++)
-                BindRunNextOperation(operations[i]);
-        }
-
-        protected virtual void BindRunNextOperation(T operation)
-        {
-            if (operation is IRequestOperation requestOperation)
-                requestOperation.AppendOnSuccess(RunNextOperation);
-            else
-                operation.OnFinish += RunNextOperation;
-        }
-
-        protected void RunNextOperation()
-        {
-            if (CurrentOperation.IsShouldRepeat())
-                return;
-            
-            CurrentStepIndex++;
-            RunCurrentOperation();
-        }
-
-        float GetProgress()
+        
+        protected override float GetProgress()
         {
             if (Count == 0)
                 return 0;
             
             return (CurrentStepIndex + CurrentStepProgress) / Count;
         }
-    }
-    
-    public enum OnStopBehavior
-    {
-        CancelAll, Retry, Restart, Skip
+
+        void ChainAllOperationsByOnFinish()
+        {
+            for (var i = 0; i < Operations.Length - 1; i++)
+                BindRunNextOperation(Operations[i]);
+        }
+
+        protected virtual void BindRunNextOperation(T operation)
+        {
+            if (operation is IRequestOperation requestOperation)
+                requestOperation.AppendOnSuccessOneShot(()=>RunNextOperation());
+            else
+            {
+                operation.OnFinish += RunNextOperationOneShot;
+                void RunNextOperationOneShot()
+                {
+                    if (RunNextOperation())
+                        operation.OnFinish -= RunNextOperationOneShot;
+                }
+            }
+        }
+
+        protected bool RunNextOperation()
+        {
+            if (CurrentOperation.IsShouldRepeat())
+                return false;
+            
+            CurrentStepIndex++;
+            RunCurrentOperation();
+            return true;
+        }
     }
 }

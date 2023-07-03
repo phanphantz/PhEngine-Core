@@ -4,7 +4,7 @@ namespace PhEngine.Core.Operation
     {
         public override void RunAll()
         {
-            this.RunAsParallel(operationList.ToArray());
+            this.RunAsParallel(OnStopBehavior.Skip,operationList.ToArray());
         }
         
         public override void Pause()

@@ -35,14 +35,14 @@ namespace PhEngine.Core.Operation
             return MasterTarget.RunAsSeries<T>(onStopBehavior, operations);
         }
 
-        public static void RunAsParallel(this Operation[] operations)
+        public static ParallelOperation RunAsParallel(this Operation[] operations, OnStopBehavior onStopBehavior = OnStopBehavior.Skip)
         {
-            MasterTarget.RunAsParallel(operations);
+            return MasterTarget.RunAsParallel(onStopBehavior, operations);
         }
         
-        public static void RunAsParallel<T>(this T[] operations) where T : Operation
+        public static ParallelOperation<T> RunAsParallel<T>(this T[] operations, OnStopBehavior onStopBehavior = OnStopBehavior.Skip) where T : Operation
         {
-            MasterTarget.RunAsParallel<Operation>(operations);
+            return MasterTarget.RunAsParallel(onStopBehavior, operations);
         }
         
         public static void Run(this MonoBehaviour target, Operation operation)
@@ -69,15 +69,18 @@ namespace PhEngine.Core.Operation
             return chainedOperation;
         }
 
-        public static void RunAsParallel(this MonoBehaviour target, params Operation[] operations)
+        public static ParallelOperation RunAsParallel(this MonoBehaviour target, OnStopBehavior onStopBehavior = OnStopBehavior.Skip, params Operation[] operations)
         {
-            RunAsParallel<Operation>(target, operations);
+            var parallelOperation = new ParallelOperation(onStopBehavior, operations);
+            Run(target, parallelOperation);
+            return parallelOperation;
         }
         
-        public static void RunAsParallel<T>(this MonoBehaviour target, params T[] operations) where T : Operation
+        public static ParallelOperation<T> RunAsParallel<T>(this MonoBehaviour target, OnStopBehavior onStopBehavior = OnStopBehavior.Skip, params T[] operations) where T : Operation
         {
-            foreach (var operation in operations)
-                Run(target,operation);
+            var parallelOperation = new ParallelOperation<T>(onStopBehavior, operations);
+            Run(target, parallelOperation);
+            return parallelOperation;
         }
     }
 }
