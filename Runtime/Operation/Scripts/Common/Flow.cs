@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace PhEngine.Core.Operation
@@ -118,26 +117,11 @@ namespace PhEngine.Core.Operation
             return parallelOperation;
         }
 
-        public Flow CreateRetryFlow(Operation startStep = null)
+        public void Recycle(Operation startStep)
         {
-            if (startStep == null)
-            {
-                var newFlow = new Flow();
-                newFlow.Merge(this);
-                return newFlow;
-            }
-            else
-            {
-                var operations = Disintegrate();
-                var startIndex = operations.IndexOf(startStep);
-                for (int i = 0; i < startIndex; i++)
-                    operations.RemoveAt(0);
-
-                var newFlow = new Flow();
-                newFlow.AddRange(operations.ToArray());
-                newFlow.AppendActions(this);
-                return newFlow;
-            }
+            var startIndex = operationList.IndexOf(startStep);
+            for (int i = 0; i < startIndex; i++)
+                operationList.RemoveAt(0);
         }
 
         public List<Operation> Disintegrate()
