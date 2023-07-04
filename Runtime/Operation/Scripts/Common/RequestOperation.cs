@@ -69,11 +69,13 @@ namespace PhEngine.Core.Operation
         {
             var result = base.TryStopByGuardCondition();
             if (result)
-                InvokeOnFail(default);
+                InvokeOnFail(GetGuardConditionResult());
             
             return result;
         }
 
+        protected virtual T GetGuardConditionResult() => default;
+        
         bool IsSuccess()
         {
             return SuccessCondition == null || SuccessCondition.Invoke();
