@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PhEngine.Core.Operation
 {
@@ -16,6 +17,11 @@ namespace PhEngine.Core.Operation
         {
         }
 
+        public Flow(Flow flow)
+        {
+            operationList.AddRange(flow.Operations);
+        }
+
         public Flow(params Operation[] operations)
         {
             operationList.AddRange(operations);
@@ -24,6 +30,11 @@ namespace PhEngine.Core.Operation
         public void Add(Operation operation)
         {
             operationList.Add(operation);
+        }
+
+        public void Insert(int index, Operation operation)
+        {
+            operationList.Insert(index, operation);
         }
 
         public void AddRange(params Operation[] operations)
@@ -82,6 +93,19 @@ namespace PhEngine.Core.Operation
             parallelOperation.OnCancel += OnAnyFail;
             parallelOperation.OnFinish += OnCompleteAll;
             return parallelOperation;
+        }
+
+        public Flow CreateCopy(Operation startStep = null)
+        {
+            if (startStep == null)
+                return new Flow(this);
+            
+            var operations = Operations.ToList();
+            var startIndex = operations.IndexOf(startStep);
+            for (int i = 0; i < startIndex; i++)
+                operations.RemoveAt(0);
+
+            return new Flow(operations.ToArray());
         }
     }
 }

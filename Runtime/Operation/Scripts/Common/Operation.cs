@@ -268,7 +268,7 @@ namespace PhEngine.Core.Operation
             InvokeOnProgress(progress);
         }
         
-        static DateTime GetCurrentDeviceTime()
+        public static DateTime GetCurrentDeviceTime()
         {
             return DateTimeFormat == DateTimeFormat.UTC ? DateTime.UtcNow : DateTime.Now;
         }
