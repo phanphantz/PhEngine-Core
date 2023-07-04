@@ -40,7 +40,7 @@ namespace PhEngine.Core.Operation
         public UnityEvent<T> onFailEvent = new UnityEvent<T>();
         public UnityEvent onReceiveResponseEvent = new UnityEvent();
 
-        public Func<bool> SuccessCondition { get; protected set; }
+        public event Func<bool> SuccessCondition;
         public Func<T> ResultCreation { get; protected set; }
 
         protected RequestOperation() 

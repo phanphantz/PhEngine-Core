@@ -13,7 +13,7 @@ namespace PhEngine.Core.Operation
             OnStart += SendRequest;
             ProgressGetter = GetWebRequestProgress;
             ResultCreation = CreateResult;
-            SuccessCondition = IsNetworkOperationSuccess;
+            SuccessCondition += IsNetworkOperationSuccess;
         }
 
         protected virtual float GetWebRequestProgress()
