@@ -76,5 +76,9 @@ namespace PhEngine.Core.Operation
             ContentFullPath = contentFullPath;
             Error = error;
         }
+
+        public DownloadFileResult()
+        {
+        }
     }
 }

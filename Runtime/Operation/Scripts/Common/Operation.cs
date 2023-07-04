@@ -73,6 +73,7 @@ namespace PhEngine.Core.Operation
         public Func<bool> RepeatCondition { get; protected set; }
         public Func<bool> AutoPauseCondition { get; protected set; }
         public Func<bool> AutoResumeCondition { get; protected set; }
+        public event Func<bool> GuardCondition;
 
         float? startTimeFromStartup;
         float? endTimeFromStartup;
@@ -139,6 +140,9 @@ namespace PhEngine.Core.Operation
                 return false;
             }
 
+            if (TryStopByGuardCondition()) 
+                return false;
+
             ResetProgress();
             IsFinished = false;
             IsStarted = true;
@@ -148,6 +152,17 @@ namespace PhEngine.Core.Operation
             EndTime = null;
             CurrentRound++;
             return true;
+        }
+
+        protected virtual bool TryStopByGuardCondition()
+        {
+            if (GuardCondition != null && GuardCondition.Invoke())
+            {
+                Debug.Log("Guard Condition detected, an operation will not run.");
+                return true;
+            }
+
+            return false;
         }
 
         public void RestartOn(MonoBehaviour target)
