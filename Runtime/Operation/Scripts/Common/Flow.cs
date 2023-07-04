@@ -68,7 +68,7 @@ namespace PhEngine.Core.Operation
             return operation;
         }
 
-        public void Merge(Flow flow)
+        public void Acquire(Flow flow)
         {
             var oldOperations = flow.Disintegrate();
             AddRange(oldOperations.ToArray());
