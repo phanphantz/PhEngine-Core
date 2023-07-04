@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace PhEngine.Core.Operation
 {
@@ -17,46 +18,68 @@ namespace PhEngine.Core.Operation
         {
         }
 
-        public Flow(Flow flow)
-        {
-            operationList.AddRange(flow.Operations);
-        }
-
         public Flow(params Operation[] operations)
         {
-            operationList.AddRange(operations);
+            AddRange(operations);
         }
 
         public void Add(Operation operation)
         {
+            if (operation.ParentFlow != null)
+            {
+                Debug.LogError("Cannot add operation because it already in another flow.");
+                return;
+            }
+            
             operationList.Add(operation);
+            operation.SetParentFlow(this);
         }
 
         public void Insert(int index, Operation operation)
         {
+            if (operation.ParentFlow != null)
+            {
+                Debug.LogError("Cannot add operation because it already in another flow.");
+                return;
+            }
+            
             operationList.Insert(index, operation);
+            operation.SetParentFlow(this);
         }
 
         public void AddRange(params Operation[] operations)
         {
-            operationList.AddRange(operations);
+            foreach (var operation in operations)
+                Add(operation);
         }
 
         public void Remove(Operation operation)
         {
+            if (operation.ParentFlow != this)
+                return;
+            
             operationList.Remove(operation);
+            operation.SetParentFlow(null);
         }
 
         public Operation Add(Action action)
         {
             var operation = new Operation(action);
-            operationList.Add(operation);
+            Add(operation);
             return operation;
         }
 
         public void Merge(Flow flow)
         {
-            AddRange(flow.Operations);
+            var oldOperations = flow.Disintegrate();
+            AddRange(oldOperations.ToArray());
+            AppendActions(flow);
+        }
+
+        void AppendActions(Flow flow)
+        {
+            OnAnyFail += flow.OnAnyFail;
+            OnCompleteAll += flow.OnCompleteAll;
         }
 
         public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
@@ -95,17 +118,36 @@ namespace PhEngine.Core.Operation
             return parallelOperation;
         }
 
-        public Flow CreateCopy(Operation startStep = null)
+        public Flow CreateRetryFlow(Operation startStep = null)
         {
             if (startStep == null)
-                return new Flow(this);
-            
-            var operations = Operations.ToList();
-            var startIndex = operations.IndexOf(startStep);
-            for (int i = 0; i < startIndex; i++)
-                operations.RemoveAt(0);
+            {
+                var newFlow = new Flow();
+                newFlow.Merge(this);
+                return newFlow;
+            }
+            else
+            {
+                var operations = Disintegrate();
+                var startIndex = operations.IndexOf(startStep);
+                for (int i = 0; i < startIndex; i++)
+                    operations.RemoveAt(0);
 
-            return new Flow(operations.ToArray());
+                var newFlow = new Flow();
+                newFlow.AddRange(operations.ToArray());
+                newFlow.AppendActions(this);
+                return newFlow;
+            }
+        }
+
+        public List<Operation> Disintegrate()
+        {
+            var resultList = new List<Operation>(Operations);
+            operationList.Clear();
+            foreach (var operation in resultList)
+                operation.SetParentFlow(null);
+            
+            return resultList;
         }
     }
 }

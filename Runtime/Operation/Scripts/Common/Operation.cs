@@ -79,6 +79,7 @@ namespace PhEngine.Core.Operation
         float? endTimeFromStartup;
 
         bool isRunningAsExternalCoroutine;
+        public Flow ParentFlow { get; private set; }
 
         public Operation(Operation operation)
         {
@@ -542,6 +543,11 @@ namespace PhEngine.Core.Operation
 
         internal void SetAutoResumeIf(Func<bool> autoResumeCondition)
             => AutoResumeCondition = autoResumeCondition;
+
+        internal void SetParentFlow(Flow flow)
+        {
+            ParentFlow = flow;
+        }
 
         #endregion
 
