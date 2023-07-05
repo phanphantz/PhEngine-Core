@@ -134,5 +134,18 @@ namespace PhEngine.Core.Operation
             
             return resultList.ToArray();
         }
+
+        public CustomYieldInstruction WaitSeries()
+        {
+            RunAsSeries();
+            return new WaitWhile(() => IsBusy);
+        }
+
+        public CustomYieldInstruction WaitParallel()
+        {
+            RunAsParallel();
+            return new WaitWhile(() => IsBusy);
+        }
+        
     }
 }

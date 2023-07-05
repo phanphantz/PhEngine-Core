@@ -100,6 +100,18 @@ namespace PhEngine.Core.Operation
                 yield return UpdateDelay;
             }
         }
+
+        public CustomYieldInstruction Wait()
+        {
+            this.Run();
+            return new WaitUntil(()=>IsFinished);
+        }
+        
+        public CustomYieldInstruction WaitOn(MonoBehaviour target)
+        {
+            RunOn(target);
+            return new WaitUntil(()=>IsFinished);
+        }
         
         public static Operation Create()
         {
