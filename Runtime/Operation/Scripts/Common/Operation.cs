@@ -19,21 +19,19 @@ namespace PhEngine.Core.Operation
 #if UNITY_EDITOR && EDITOR_COROUTINE
         EditorCoroutine activeEditorRoutine;
 #endif
-        public Operation() 
+        public Operation()
         {
-            
         }
 
         public Operation(Action action) : base(action)
         {
-            
         }
-        
+
         protected override void RunInternally()
         {
             RunOn(Host);
         }
-        
+
         public virtual void RunOn(MonoBehaviour target)
         {
             if (!TryStart())
@@ -58,12 +56,12 @@ namespace PhEngine.Core.Operation
 #endif
             }
         }
-        
+
         IEnumerator Coroutine(int assignedRound)
         {
             yield return StartDelay;
             InvokeOnStart();
-            
+
             if (TryFinishOrKill(assignedRound))
                 yield break;
 
@@ -72,11 +70,11 @@ namespace PhEngine.Core.Operation
                 PassTimeByDeltaTime();
                 if (TryFinishOrKill(assignedRound))
                     yield break;
-            
+
                 InvokeOnUpdate();
                 if (TryFinishOrKill(assignedRound))
                     yield break;
-            
+
                 RefreshProgress();
                 if (TryFinishOrKill(assignedRound))
                     yield break;
@@ -89,10 +87,10 @@ namespace PhEngine.Core.Operation
         {
             if (!TryStart())
                 return;
-            
+
             if (StartDelay != null)
                 await StartDelay;
-            
+
             InvokeOnStart();
 
             var result = await InternalTask();
@@ -115,34 +113,35 @@ namespace PhEngine.Core.Operation
 
         async UniTask<Ending> InternalTask()
         {
-            PassTimeByDeltaTime();
-            var runningStatus = GetRunningStatus(CurrentRound);
-            if (runningStatus != Ending.NotReached)
-                return runningStatus;
+            while (true)
+            {
+                PassTimeByDeltaTime();
+                var runningStatus = GetRunningStatus(CurrentRound);
+                if (runningStatus != Ending.NotReached)
+                    return runningStatus;
 
-            InvokeOnUpdate();
-            runningStatus = GetRunningStatus(CurrentRound);
-            if (runningStatus != Ending.NotReached)
-                return runningStatus;
+                InvokeOnUpdate();
+                runningStatus = GetRunningStatus(CurrentRound);
+                if (runningStatus != Ending.NotReached)
+                    return runningStatus;
 
-            RefreshProgress();
-            runningStatus = GetRunningStatus(CurrentRound);
-            if (runningStatus != Ending.NotReached)
-                return runningStatus;
+                RefreshProgress();
+                runningStatus = GetRunningStatus(CurrentRound);
+                if (runningStatus != Ending.NotReached)
+                    return runningStatus;
 
-            if (UpdateDelay != null)
-                await UpdateDelay;
-            else
-                await UniTask.Yield();
-
-            return await InternalTask();
+                if (UpdateDelay != null)
+                    await UpdateDelay;
+                else
+                    await UniTask.Yield();
+            }
         }
 
         protected override void NotifyCancel()
         {
             if (isUseCoroutine)
                 CancelCoroutine();
-            
+
             base.NotifyCancel();
         }
 
@@ -169,15 +168,15 @@ namespace PhEngine.Core.Operation
         public CustomYieldInstruction Wait()
         {
             this.Run();
-            return new WaitUntil(()=>IsFinished);
+            return new WaitUntil(() => IsFinished);
         }
-        
+
         public CustomYieldInstruction WaitOn(MonoBehaviour target)
         {
             RunOn(target);
-            return new WaitUntil(()=>IsFinished);
+            return new WaitUntil(() => IsFinished);
         }
-        
+
         public static Operation Create()
         {
             return new Operation();
