@@ -47,7 +47,7 @@ namespace PhEngine.Core.Operation
             {
                 case OnStopBehavior.Retry:
                     foreach (var op in Operations)
-                        op.Restart();
+                        OperationRunnerUtils.Restart(op);
                     break;
                 
                 case OnStopBehavior.Restart:
@@ -55,7 +55,7 @@ namespace PhEngine.Core.Operation
                     break;
                 
                 case OnStopBehavior.CancelAll:
-                    ForceCancel();
+                    NotifyCancel();
                     break;
                 
                 case OnStopBehavior.Skip:

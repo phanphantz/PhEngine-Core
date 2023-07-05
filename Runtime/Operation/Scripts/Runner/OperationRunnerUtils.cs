@@ -22,7 +22,7 @@ namespace PhEngine.Core.Operation
         
         public static void Restart(this Operation operation)
         {
-            operation.RestartOn(MasterTarget);
+            Restart(operation);
         }
         
         public static ChainedOperation RunAsSeries(this Operation[] operations, OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll)
@@ -49,12 +49,7 @@ namespace PhEngine.Core.Operation
         {
             operation.RunOn(target);
         }
-        
-        public static void Restart(this MonoBehaviour target, Operation operation)
-        {
-            operation.RestartOn(target);
-        }
-        
+
         public static ChainedOperation RunAsSeries(this MonoBehaviour target, OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params Operation[] operations)
         {
             var chainedOperation = new ChainedOperation(onStopBehavior,operations);

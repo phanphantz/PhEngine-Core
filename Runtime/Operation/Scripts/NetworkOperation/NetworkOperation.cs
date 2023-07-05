@@ -21,10 +21,7 @@ namespace PhEngine.Core.Operation
             return WebRequest.downloadProgress;
         }
 
-        protected override bool IsShouldFinish()
-        {
-            return WebRequest.isDone;
-        }
+        protected override bool IsShouldFinish => WebRequest.isDone;
 
         void SendRequest()
         {

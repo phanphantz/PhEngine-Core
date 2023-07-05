@@ -69,7 +69,7 @@ namespace PhEngine.Core.Operation
                     break;
                 
                 case OnStopBehavior.CancelAll:
-                    ForceCancel();
+                    NotifyCancel();
                     break;
                 
                 case OnStopBehavior.Skip:
