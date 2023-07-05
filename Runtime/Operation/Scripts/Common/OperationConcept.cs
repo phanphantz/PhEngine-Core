@@ -1,10 +1,9 @@
 ﻿using System;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace PhEngine.Core.Operation
 {
-    public abstract class BaseOperation
+    public abstract class OperationConcept
     {
         //Status
         public bool IsStarted { get; private set; }
@@ -65,12 +64,12 @@ namespace PhEngine.Core.Operation
         float? startTimeFromStartup;
         float? endTimeFromStartup;
 
-        protected BaseOperation()
+        protected OperationConcept()
         {
             TreatAsAction();
         }
 
-        protected BaseOperation(Action action)
+        protected OperationConcept(Action action)
         {
             OnStart += action;
             TreatAsAction();
@@ -198,13 +197,13 @@ namespace PhEngine.Core.Operation
             IsStarted = false;
         }
         
-        protected virtual void NotifyFinishAndTryRepeat()
+        protected void NotifyFinishAndTryRepeat()
         {
             NotifyFinish();
             TryRepeat();
         }
 
-        protected void NotifyFinish()
+        protected virtual void NotifyFinish()
         {
             SetProgress(1f);
             IsFinished = true;
@@ -223,7 +222,7 @@ namespace PhEngine.Core.Operation
         
         protected virtual bool TryFinishOrKill(int round)
         {
-            var status = GetRunningStatus(round);
+            var status = GetEndingStatus(round);
             switch (status)
             {
                 case Ending.Finish:
@@ -237,7 +236,7 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        protected Ending GetRunningStatus(int round)
+        protected Ending GetEndingStatus(int round)
         {
             if (CurrentRound != round)
                 return Ending.Finish;

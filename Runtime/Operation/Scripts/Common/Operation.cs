@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
+
+#if UNITASK
+using Cysharp.Threading.Tasks;
+#endif
 
 #if UNITY_EDITOR && EDITOR_COROUTINE
 using Unity.EditorCoroutines.Editor;
@@ -9,7 +12,7 @@ using Unity.EditorCoroutines.Editor;
 
 namespace PhEngine.Core.Operation
 {
-    public class Operation : BaseOperation
+    public class Operation : OperationConcept
     {
         protected MonoBehaviour Host => host;
         MonoBehaviour host;
@@ -83,6 +86,7 @@ namespace PhEngine.Core.Operation
             }
         }
 
+#if UNITASK
         public async UniTask Task()
         {
             if (!TryStart())
@@ -116,17 +120,17 @@ namespace PhEngine.Core.Operation
             while (true)
             {
                 PassTimeByDeltaTime();
-                var runningStatus = GetRunningStatus(CurrentRound);
+                var runningStatus = GetEndingStatus(CurrentRound);
                 if (runningStatus != Ending.NotReached)
                     return runningStatus;
 
                 InvokeOnUpdate();
-                runningStatus = GetRunningStatus(CurrentRound);
+                runningStatus = GetEndingStatus(CurrentRound);
                 if (runningStatus != Ending.NotReached)
                     return runningStatus;
 
                 RefreshProgress();
-                runningStatus = GetRunningStatus(CurrentRound);
+                runningStatus = GetEndingStatus(CurrentRound);
                 if (runningStatus != Ending.NotReached)
                     return runningStatus;
 
@@ -136,7 +140,8 @@ namespace PhEngine.Core.Operation
                     await UniTask.Yield();
             }
         }
-
+#endif
+        
         protected override void NotifyCancel()
         {
             if (isUseCoroutine)
