@@ -4,7 +4,8 @@
     "references": [
         "PhEngine.Core",
         "Unity.EditorCoroutines.Editor",
-        "PhEngine.Core.JSON"
+        "PhEngine.Core.JSON",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

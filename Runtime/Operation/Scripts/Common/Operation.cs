@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 #if UNITY_EDITOR && EDITOR_COROUTINE
@@ -13,7 +14,8 @@ namespace PhEngine.Core.Operation
         protected MonoBehaviour Host => host;
         MonoBehaviour host;
         Coroutine activeRoutine;
-        
+        bool isUseCoroutine;
+
 #if UNITY_EDITOR && EDITOR_COROUTINE
         EditorCoroutine activeEditorRoutine;
 #endif
@@ -31,13 +33,14 @@ namespace PhEngine.Core.Operation
         {
             RunOn(Host);
         }
-
+        
         public virtual void RunOn(MonoBehaviour target)
         {
             if (!TryStart())
                 return;
 
             host = target;
+            isUseCoroutine = true;
             var routine = Coroutine(CurrentRound);
             if (Application.isPlaying && host)
             {
@@ -56,25 +59,6 @@ namespace PhEngine.Core.Operation
             }
         }
         
-        protected override void NotifyCancel()
-        {
-#if UNITY_EDITOR && EDITOR_COROUTINE
-            if (activeEditorRoutine != null)
-                EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
-            
-            activeEditorRoutine = null;
-#endif
-            if (host)
-            {
-                if (activeRoutine != null)
-                    host.StopCoroutine(activeRoutine);
-            
-                activeRoutine = null;
-                host = null;
-            }
-            base.NotifyCancel();
-        }
-
         IEnumerator Coroutine(int assignedRound)
         {
             yield return StartDelay;
@@ -99,6 +83,87 @@ namespace PhEngine.Core.Operation
 
                 yield return UpdateDelay;
             }
+        }
+
+        public async UniTask Task()
+        {
+            if (!TryStart())
+                return;
+            
+            if (StartDelay != null)
+                await StartDelay;
+            
+            InvokeOnStart();
+
+            var result = await InternalTask();
+            switch (result)
+            {
+                case Ending.Finish:
+                {
+                    NotifyFinish();
+                    if (IsShouldRepeat())
+                        await Task();
+                    else
+                        CurrentRound = 0;
+                    break;
+                }
+                case Ending.Cancel:
+                    NotifyCancel();
+                    break;
+            }
+        }
+
+        async UniTask<Ending> InternalTask()
+        {
+            PassTimeByDeltaTime();
+            var runningStatus = GetRunningStatus(CurrentRound);
+            if (runningStatus != Ending.NotReached)
+                return runningStatus;
+
+            InvokeOnUpdate();
+            runningStatus = GetRunningStatus(CurrentRound);
+            if (runningStatus != Ending.NotReached)
+                return runningStatus;
+
+            RefreshProgress();
+            runningStatus = GetRunningStatus(CurrentRound);
+            if (runningStatus != Ending.NotReached)
+                return runningStatus;
+
+            if (UpdateDelay != null)
+                await UpdateDelay;
+            else
+                await UniTask.Yield();
+
+            return await InternalTask();
+        }
+
+        protected override void NotifyCancel()
+        {
+            if (isUseCoroutine)
+                CancelCoroutine();
+            
+            base.NotifyCancel();
+        }
+
+        void CancelCoroutine()
+        {
+#if UNITY_EDITOR && EDITOR_COROUTINE
+            if (activeEditorRoutine != null)
+                EditorCoroutineUtility.StopCoroutine(activeEditorRoutine);
+
+            activeEditorRoutine = null;
+#endif
+            if (host)
+            {
+                if (activeRoutine != null)
+                    host.StopCoroutine(activeRoutine);
+
+                activeRoutine = null;
+                host = null;
+            }
+
+            isUseCoroutine = false;
         }
 
         public CustomYieldInstruction Wait()

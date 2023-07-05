@@ -1,4 +1,5 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace PhEngine.Core.Operation
@@ -35,8 +36,8 @@ namespace PhEngine.Core.Operation
         public DateTime? EndTime { get; private set; }
         public int CurrentRound { get; protected set; }
         public float TimeScale { get; private set; } = 1f;
-        public YieldInstruction StartDelay { get; protected set; }
-        public YieldInstruction UpdateDelay { get; protected set; }
+        public CustomYieldInstruction StartDelay { get; protected set; }
+        public CustomYieldInstruction UpdateDelay { get; protected set; }
         
         #region Getters
         
@@ -113,7 +114,7 @@ namespace PhEngine.Core.Operation
             }
 
             IsPaused = false;
-            NotifyFinish();
+            NotifyFinishAndTryRepeat();
         }
 
         public void Pause()
@@ -197,16 +198,21 @@ namespace PhEngine.Core.Operation
             IsStarted = false;
         }
         
-        protected virtual void NotifyFinish()
+        protected virtual void NotifyFinishAndTryRepeat()
+        {
+            NotifyFinish();
+            TryRepeat();
+        }
+
+        protected void NotifyFinish()
         {
             SetProgress(1f);
             IsFinished = true;
             EndTime = GetCurrentDeviceTime();
             endTimeFromStartup = Time.realtimeSinceStartup;
             InvokeOnFinish();
-            TryRepeat();
         }
-        
+
         protected virtual void TryRepeat()
         {
             if (IsShouldRepeat())
@@ -217,23 +223,34 @@ namespace PhEngine.Core.Operation
         
         protected virtual bool TryFinishOrKill(int round)
         {
+            var status = GetRunningStatus(round);
+            switch (status)
+            {
+                case Ending.Finish:
+                    NotifyFinishAndTryRepeat();
+                    return true;
+                case Ending.Cancel:
+                    NotifyCancel();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        protected Ending GetRunningStatus(int round)
+        {
             if (CurrentRound != round)
-                return true;
+                return Ending.Finish;
 
             if (ExpireCondition != null && ExpireCondition.Invoke())
-            {
-                NotifyCancel();
-                return true;
-            }
+                return Ending.Cancel;
 
-            if (!IsShouldFinish) 
-                return false;
-            
-            if (!IsActive)
-                return true;
+            return !IsShouldFinish ? Ending.NotReached : Ending.Finish;
+        }
 
-            NotifyFinish();
-            return true;
+        protected enum Ending
+        {
+            NotReached, Finish, Cancel
         }
         
         #endregion
@@ -368,7 +385,7 @@ namespace PhEngine.Core.Operation
         internal void SetTimeScale(float value)
             => TimeScale = value;
 
-        internal void SetStartDelay(YieldInstruction value) 
+        internal void SetStartDelay(CustomYieldInstruction value) 
             => StartDelay = value;
         
         internal void SetRepeatIf(Func<bool> repeatCondition)
@@ -384,7 +401,7 @@ namespace PhEngine.Core.Operation
         
         #region Internal Update & Progression
 
-        internal void SetUpdateEvery(YieldInstruction value)
+        internal void SetUpdateEvery(CustomYieldInstruction value)
             => UpdateDelay = value;
 
         internal void SetProgressOn(Func<float> getter)
