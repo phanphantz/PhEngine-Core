@@ -15,9 +15,10 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        public static void Run(this Operation operation)
+        public static Operation Run(this Operation operation)
         {
             operation.RunOn(MasterTarget);
+            return operation;
         }
         
         public static void Restart(this Operation operation)

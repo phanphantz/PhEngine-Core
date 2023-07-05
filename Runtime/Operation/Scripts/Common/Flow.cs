@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +11,10 @@ namespace PhEngine.Core.Operation
 
         public event Action OnAnyFail;
         public event Action OnCompleteAll;
+
+        bool isStarted;
+
+        public bool IsBusy;
         
         public Flow()
         {
@@ -24,26 +27,22 @@ namespace PhEngine.Core.Operation
 
         public void Add(Operation operation)
         {
-            if (operation.ParentFlow != null)
-            {
-                Debug.LogError("Cannot add operation because it already in another flow.");
-                return;
-            }
-            
             operationList.Add(operation);
             operation.SetParentFlow(this);
         }
 
         public void Insert(int index, Operation operation)
         {
-            if (operation.ParentFlow != null)
-            {
-                Debug.LogError("Cannot add operation because it already in another flow.");
-                return;
-            }
-            
             operationList.Insert(index, operation);
             operation.SetParentFlow(this);
+        }
+
+        public void InsertOneShot(int index, Operation operation)
+        {
+            Insert(index, operation);
+            operation.OnFinish += () => Remove(operation);
+            OnAnyFail += () => Remove(operation);
+            OnCompleteAll += () => Remove(operation);
         }
 
         public void AddRange(params Operation[] operations)
@@ -70,8 +69,8 @@ namespace PhEngine.Core.Operation
 
         public void Acquire(Flow flow)
         {
-            var oldOperations = flow.Disintegrate();
-            AddRange(oldOperations.ToArray());
+            var oldOperations = flow.ReleaseOperations();
+            AddRange(oldOperations);
             AppendActions(flow);
         }
 
@@ -83,55 +82,57 @@ namespace PhEngine.Core.Operation
 
         public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
         {
+            IsBusy = true;
             var chainedOperation = CreateChainOperation(stopBehavior);
             chainedOperation.Run();
             return chainedOperation;
         }
-
-        public IEnumerator AsChainedCoroutine(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll) =>
-            CreateChainOperation(stopBehavior).Coroutine();
-
-        public ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior)
+        
+        ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior)
         {
             var chainedOperation = new ChainedOperation(stopBehavior, operationList.ToArray());
-            chainedOperation.OnCancel += OnAnyFail;
-            chainedOperation.OnFinish += OnCompleteAll;
+            chainedOperation.OnCancel += NotifyFail;
+            chainedOperation.OnFinish += NotifyComplete;
             return chainedOperation;
         }
+
+        void NotifyComplete()
+        {
+            OnCompleteAll?.Invoke();
+            IsBusy = false;
+        }
         
-        public IEnumerator AsParallelCoroutine(OnStopBehavior stopBehavior = OnStopBehavior.Skip) =>
-            CreateParallelOperation(stopBehavior).Coroutine();
+        void NotifyFail()
+        {
+            OnAnyFail?.Invoke();
+            IsBusy = false;
+        }
 
         public ParallelOperation RunAsParallel(OnStopBehavior stopBehavior = OnStopBehavior.Skip)
         {
+            IsBusy = true;
             var parallelOperation = CreateParallelOperation(stopBehavior);
             parallelOperation.Run();
             return parallelOperation;
         }
         
-        public ParallelOperation CreateParallelOperation(OnStopBehavior stopBehavior)
+        ParallelOperation CreateParallelOperation(OnStopBehavior stopBehavior)
         {
             var parallelOperation = new ParallelOperation(stopBehavior, operationList.ToArray());
-            parallelOperation.OnCancel += OnAnyFail;
-            parallelOperation.OnFinish += OnCompleteAll;
+            parallelOperation.OnCancel += NotifyFail;
+            parallelOperation.OnFinish += NotifyComplete;
             return parallelOperation;
         }
-
-        public void Recycle(Operation startStep)
+        
+        public Operation[] ReleaseOperations()
         {
-            var startIndex = operationList.IndexOf(startStep);
-            for (int i = 0; i < startIndex; i++)
-                operationList.RemoveAt(0);
-        }
-
-        public List<Operation> Disintegrate()
-        {
+            IsBusy = false;
             var resultList = new List<Operation>(Operations);
             operationList.Clear();
             foreach (var operation in resultList)
                 operation.SetParentFlow(null);
             
-            return resultList;
+            return resultList.ToArray();
         }
     }
 }

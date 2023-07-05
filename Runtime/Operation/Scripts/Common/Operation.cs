@@ -17,8 +17,6 @@ namespace PhEngine.Core.Operation
 #if UNITY_EDITOR && EDITOR_COROUTINE
         EditorCoroutine activeEditorRoutine;
 #endif
-        bool isRunningAsExternalCoroutine;
-        
         public Operation() 
         {
             
@@ -40,7 +38,7 @@ namespace PhEngine.Core.Operation
                 return;
 
             host = target;
-            var routine = InternalCoroutine(CurrentRound);
+            var routine = Coroutine(CurrentRound);
             if (Application.isPlaying && host)
             {
                 activeRoutine = host.StartCoroutine(routine);
@@ -77,34 +75,7 @@ namespace PhEngine.Core.Operation
             base.NotifyCancel();
         }
 
-        protected override bool TryStart()
-        {
-            isRunningAsExternalCoroutine = false;
-            return base.TryStart();
-        }
-        
-        protected override void TryRepeat()
-        {
-            if (isRunningAsExternalCoroutine)
-                return;
-
-            base.TryRepeat();
-        }
-        
-        public IEnumerator Coroutine()
-        {
-            while (IsShouldRepeat() || !isRunningAsExternalCoroutine)
-            {
-                if (!TryStart())
-                    yield break;
-
-                isRunningAsExternalCoroutine = true;
-                yield return InternalCoroutine(CurrentRound);
-            }
-            CurrentRound = 0;
-        }
-        
-        IEnumerator InternalCoroutine(int assignedRound)
+        IEnumerator Coroutine(int assignedRound)
         {
             yield return StartDelay;
             InvokeOnStart();
