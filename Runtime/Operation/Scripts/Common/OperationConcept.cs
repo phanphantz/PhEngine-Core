@@ -9,6 +9,7 @@ namespace PhEngine.Core.Operation
         public bool IsStarted { get; private set; }
         public bool IsFinished { get; private set; }
         public bool IsPaused { get; private set; }
+        public OperationStatus Status { get; private set; }
 
         //Actions
         public event Action<float> OnProgress;
@@ -90,7 +91,9 @@ namespace PhEngine.Core.Operation
         public void Reset()
         {
             ResetProgress();
+            IsStarted = false;
             IsFinished = false;
+            Status = OperationStatus.NotStarted;
             StartTime = GetCurrentDeviceTime();
             startTimeFromStartup = Time.realtimeSinceStartup;
             endTimeFromStartup = null;
@@ -135,6 +138,7 @@ namespace PhEngine.Core.Operation
                 return;
             
             IsPaused = true;
+            Status = OperationStatus.Paused;
             InvokeOnPause();
         }
         
@@ -150,6 +154,7 @@ namespace PhEngine.Core.Operation
                 return;
             
             IsPaused = false;
+            Status = OperationStatus.Running;
             InvokeOnResume();
         }
 
@@ -187,11 +192,13 @@ namespace PhEngine.Core.Operation
         {
             Reset();
             IsStarted = true;
+            Status = OperationStatus.Running;
         }
         
         protected virtual void NotifyCancel()
         {
             StartTime = null;
+            Status = OperationStatus.Cancelled;
             startTimeFromStartup = null;
             endTimeFromStartup = null;
             EndTime = null;
@@ -202,6 +209,7 @@ namespace PhEngine.Core.Operation
         {
             SetProgress(1f);
             IsFinished = true;
+            Status = OperationStatus.Finished;
             EndTime = GetCurrentDeviceTime();
             endTimeFromStartup = Time.realtimeSinceStartup;
             InvokeOnFinish();
@@ -477,5 +485,10 @@ namespace PhEngine.Core.Operation
     public enum DateTimeFormat
     {
         UTC, Local
+    }
+
+    public enum OperationStatus
+    {
+        NotStarted, Paused, Running, Finished, Cancelled
     }
 }
