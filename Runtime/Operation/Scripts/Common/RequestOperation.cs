@@ -1,5 +1,8 @@
 using System;
+
+#if UNITASK
 using Cysharp.Threading.Tasks;
+#endif
 
 namespace PhEngine.Core.Operation
 {
@@ -73,13 +76,15 @@ namespace PhEngine.Core.Operation
             return result;
         }
 
+#if UNITASK
         protected override async UniTask PostProcessTask()
         {
             await base.PostProcessTask();
             if (!wasSuccess)
                 throw new OperationCanceledException();
         }
-
+#endif
+        
         protected virtual T GetGuardConditionResult() => default;
         
         bool IsSuccess()
