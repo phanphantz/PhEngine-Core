@@ -12,7 +12,7 @@ using Unity.EditorCoroutines.Editor;
 
 namespace PhEngine.Core.Operation
 {
-    public class Operation : OperationConcept
+    public class Operation : OperationCore
     {
         protected MonoBehaviour Host => host;
         MonoBehaviour host;
@@ -94,7 +94,7 @@ namespace PhEngine.Core.Operation
                 throw new OperationCanceledException();
 
             if (StartDelay != null)
-                await StartDelay;
+                await StartDelayTask;
 
             InvokeOnStart();
 
@@ -142,7 +142,7 @@ namespace PhEngine.Core.Operation
                     return runningStatus;
 
                 if (UpdateDelay != null)
-                    await UpdateDelay;
+                    await UpdateDelayTask;
                 else
                     await UniTask.Yield();
             }
@@ -198,11 +198,6 @@ namespace PhEngine.Core.Operation
         public static Operation Create()
         {
             return new Operation();
-        }
-
-        public static Operation From(Action action)
-        {
-            return new Operation(action);
         }
     }
 }

@@ -1,9 +1,13 @@
 ﻿using System;
 using UnityEngine;
 
+#if UNITASK
+using Cysharp.Threading.Tasks;
+#endif
+
 namespace PhEngine.Core.Operation
 {
-    public abstract class OperationConcept
+    public abstract class OperationCore
     {
         //Status
         public bool IsStarted { get; private set; }
@@ -34,8 +38,13 @@ namespace PhEngine.Core.Operation
         public DateTime? StartTime { get; private set; }
         public DateTime? EndTime { get; private set; }
         public float TimeScale { get; private set; } = 1f;
-        public CustomYieldInstruction StartDelay { get; protected set; }
-        public CustomYieldInstruction UpdateDelay { get; protected set; }
+        public YieldInstruction StartDelay { get; protected set; }
+        public YieldInstruction UpdateDelay { get; protected set; }
+        
+#if UNITASK
+        public UniTask StartDelayTask { get; protected set; }
+        public UniTask UpdateDelayTask { get; protected set; }
+#endif      
         
         #region Getters
         
@@ -62,12 +71,12 @@ namespace PhEngine.Core.Operation
         float? startTimeFromStartup;
         float? endTimeFromStartup;
 
-        protected OperationConcept()
+        protected OperationCore()
         {
             TreatAsAction();
         }
 
-        protected OperationConcept(Action action)
+        protected OperationCore(Action action)
         {
             OnStart += action;
             TreatAsAction();
@@ -459,10 +468,33 @@ namespace PhEngine.Core.Operation
         
         internal void SetTimeScale(float value)
             => TimeScale = value;
-
-        internal void SetStartDelay(CustomYieldInstruction value) 
-            => StartDelay = value;
         
+        internal void SetStartDelay(TimeSpan value)
+        {
+            if (value == TimeSpan.Zero)
+            {
+                StartDelay = null;
+#if UNITASK
+                StartDelayTask = default;
+#endif
+            }
+            else
+            {
+                StartDelay = new WaitForSeconds((float)value.TotalSeconds);
+#if UNITASK
+                StartDelayTask = UniTask.Delay(value);
+#endif
+            }
+        }
+        
+        internal void DelayStartToNextFrame()
+        {
+            StartDelay = new WaitForEndOfFrame();
+#if UNITASK
+            StartDelayTask = UniTask.DelayFrame(1);
+#endif
+        }
+
         internal void SetExpireIf(Func<bool> expireCondition)
             => ExpireCondition = expireCondition;
         
@@ -473,8 +505,31 @@ namespace PhEngine.Core.Operation
         
         #region Internal Update & Progression
 
-        internal void SetUpdateEvery(CustomYieldInstruction value)
-            => UpdateDelay = value;
+        internal void SetUpdateEvery(TimeSpan value)
+        {
+            if (value == TimeSpan.Zero)
+            {
+                UpdateDelay = null;
+#if UNITASK
+                UpdateDelayTask = default;
+#endif
+            }
+            else
+            {
+                UpdateDelay = new WaitForSeconds((float)value.TotalSeconds);
+#if UNITASK
+                UpdateDelayTask = UniTask.Delay(value);
+#endif
+            }
+        }
+        
+        internal void SetUpdateEveryFrame()
+        {
+            UpdateDelay = new WaitForEndOfFrame();
+#if UNITASK
+            UpdateDelayTask = UniTask.DelayFrame(1);
+#endif
+        }
 
         internal void SetProgressOn(Func<float> getter)
             => ProgressGetter = getter;

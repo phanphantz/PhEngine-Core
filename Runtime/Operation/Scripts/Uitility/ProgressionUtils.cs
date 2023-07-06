@@ -27,23 +27,5 @@ namespace PhEngine.Core.Operation
             operation.SetProgressOn(getter);
             return operation;
         }
-        
-        public static Operation SetAutoPauseIf(this Operation operation, Func<bool> autoPauseCondition)
-        {
-            operation.SetAutoPauseIf(autoPauseCondition);
-            return operation;
-        }
-        
-        public static Operation ClearAutoPause(this Operation operation)
-            => SetAutoPauseIf(operation,null);
-        
-        public static Operation SetAutoResumeIf(this Operation operation, Func<bool> autoResumeCondition)
-        {
-            operation.SetAutoResumeIf(autoResumeCondition);
-            return operation;
-        }
-        
-        public static Operation ClearAutoResume(this Operation operation)
-            => SetAutoResumeIf(operation,null);
     }
 }
