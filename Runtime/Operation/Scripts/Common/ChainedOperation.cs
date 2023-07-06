@@ -5,7 +5,11 @@ namespace PhEngine.Core.Operation
     [Serializable]
     public class ChainedOperation : ChainedOperation<Operation>
     {
-        public ChainedOperation(OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params Operation[] operations) : base (onStopBehavior , operations)
+        public ChainedOperation(OnStopBehavior onStopBehavior, params Operation[] operations) : base (onStopBehavior , operations)
+        {
+        }
+        
+        public ChainedOperation(params Operation[] operations) : base (operations)
         {
         }
     }
@@ -27,7 +31,13 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        public ChainedOperation(OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params T[] operations) : base (onStopBehavior, operations)
+        public ChainedOperation(OnStopBehavior onStopBehavior, params T[] operations) : base (onStopBehavior, operations)
+        {
+            OnStart += RunFirstOperation;
+            OnCancel += CancelCurrentOperation;
+        }
+        
+        public ChainedOperation(params T[] operations) : base (OnStopBehavior.CancelAll,operations)
         {
             OnStart += RunFirstOperation;
             OnCancel += CancelCurrentOperation;
@@ -35,14 +45,17 @@ namespace PhEngine.Core.Operation
         
         void RunFirstOperation()
         {
-            ChainAllOperationsByOnFinish();
             CurrentStepIndex = 0;
             RunCurrentOperation();
         }
         
         void RunCurrentOperation()
         {
-            CurrentOperation?.RunOn(Host);
+            if (CurrentOperation == null)
+                return;
+            
+            BindRunNextOperation(CurrentOperation);
+            CurrentOperation.RunOn(Host);
         }
 
         void CancelCurrentOperation()
@@ -88,35 +101,19 @@ namespace PhEngine.Core.Operation
             return (CurrentStepIndex + CurrentStepProgress) / Count;
         }
 
-        void ChainAllOperationsByOnFinish()
-        {
-            for (var i = 0; i < Operations.Length - 1; i++)
-                BindRunNextOperation(Operations[i]);
-        }
-
         protected virtual void BindRunNextOperation(T operation)
         {
+            BindStepBasedActions(operation);
             if (operation is IRequestOperation requestOperation)
-                requestOperation.AppendOnSuccessOneShot(()=>RunNextOperation());
+                requestOperation.BindOneShotOnSuccessTypeless(RunNextOperation);
             else
-            {
-                operation.OnFinish += RunNextOperationOneShot;
-                void RunNextOperationOneShot()
-                {
-                    if (RunNextOperation())
-                        operation.OnFinish -= RunNextOperationOneShot;
-                }
-            }
+                operation.BindOneShotOnFinish(RunNextOperation);
         }
 
-        protected bool RunNextOperation()
+        protected void RunNextOperation()
         {
-            if (CurrentOperation.IsShouldRepeat())
-                return false;
-            
             CurrentStepIndex++;
             RunCurrentOperation();
-            return true;
         }
     }
 }

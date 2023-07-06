@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Forms.DataVisualization.Charting;
 using UnityEngine;
 
 namespace PhEngine.Core.Operation
@@ -11,10 +12,8 @@ namespace PhEngine.Core.Operation
 
         public event Action OnAnyFail;
         public event Action OnCompleteAll;
-
-        bool isStarted;
-
-        public bool IsBusy;
+        public Operation RunningOperation { get; private set; }
+        public bool IsBusy => RunningOperation != null;
         
         public Flow()
         {
@@ -37,12 +36,16 @@ namespace PhEngine.Core.Operation
             operation.SetParentFlow(this);
         }
 
+        public void InsertBefore(Operation existingStep, Operation operationToInsert)
+        {
+            InsertOneShot(operationList.IndexOf(existingStep), operationToInsert);
+        }
+
         public void InsertOneShot(int index, Operation operation)
         {
             Insert(index, operation);
             operation.OnFinish += () => Remove(operation);
-            OnAnyFail += () => Remove(operation);
-            OnCompleteAll += () => Remove(operation);
+            operation.OnCancel += () => Remove(operation);
         }
 
         public void AddRange(params Operation[] operations)
@@ -80,17 +83,21 @@ namespace PhEngine.Core.Operation
             OnCompleteAll += flow.OnCompleteAll;
         }
 
-        public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll)
+        public ChainedOperation RunAsSeries(OnStopBehavior stopBehavior = OnStopBehavior.CancelAll, int startIndex = 0)
         {
-            IsBusy = true;
-            var chainedOperation = CreateChainOperation(stopBehavior);
+            var chainedOperation = CreateChainOperation(stopBehavior, startIndex);
             chainedOperation.Run();
+            RunningOperation = chainedOperation;
             return chainedOperation;
         }
         
-        ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior)
+        ChainedOperation CreateChainOperation(OnStopBehavior stopBehavior, int startIndex = 0)
         {
-            var chainedOperation = new ChainedOperation(stopBehavior, operationList.ToArray());
+            var targetOperationList = new List<Operation>(operationList);
+            for (int i = 0; i < startIndex; i++)
+                targetOperationList.RemoveAt(0);
+
+            var chainedOperation = new ChainedOperation(stopBehavior, targetOperationList.ToArray());
             chainedOperation.OnCancel += NotifyFail;
             chainedOperation.OnFinish += NotifyComplete;
             return chainedOperation;
@@ -99,20 +106,20 @@ namespace PhEngine.Core.Operation
         void NotifyComplete()
         {
             OnCompleteAll?.Invoke();
-            IsBusy = false;
+            RunningOperation = null;
         }
         
         void NotifyFail()
         {
             OnAnyFail?.Invoke();
-            IsBusy = false;
+            RunningOperation = null;
         }
 
         public ParallelOperation RunAsParallel(OnStopBehavior stopBehavior = OnStopBehavior.Skip)
         {
-            IsBusy = true;
             var parallelOperation = CreateParallelOperation(stopBehavior);
             parallelOperation.Run();
+            RunningOperation = parallelOperation;
             return parallelOperation;
         }
         
@@ -126,7 +133,7 @@ namespace PhEngine.Core.Operation
         
         public Operation[] ReleaseOperations()
         {
-            IsBusy = false;
+            RunningOperation = null;
             var resultList = new List<Operation>(Operations);
             operationList.Clear();
             foreach (var operation in resultList)
@@ -146,6 +153,5 @@ namespace PhEngine.Core.Operation
             RunAsParallel();
             return new WaitWhile(() => IsBusy);
         }
-        
     }
 }

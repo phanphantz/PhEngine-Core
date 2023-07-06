@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Threading.Tasks;
 using UnityEngine;
 
 #if UNITASK
@@ -43,7 +42,7 @@ namespace PhEngine.Core.Operation
 
             host = target;
             isUseCoroutine = true;
-            var routine = Coroutine(CurrentRound);
+            var routine = Coroutine();
             if (Application.isPlaying && host)
             {
                 activeRoutine = host.StartCoroutine(routine);
@@ -61,26 +60,26 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        IEnumerator Coroutine(int assignedRound)
+        IEnumerator Coroutine()
         {
             yield return StartDelay;
             InvokeOnStart();
 
-            if (TryFinishOrKill(assignedRound))
+            if (TryFinishOrKill())
                 yield break;
 
-            while (!TryFinishOrKill(assignedRound))
+            while (true)
             {
                 PassTimeByDeltaTime();
-                if (TryFinishOrKill(assignedRound))
+                if (TryFinishOrKill())
                     yield break;
 
                 InvokeOnUpdate();
-                if (TryFinishOrKill(assignedRound))
+                if (TryFinishOrKill())
                     yield break;
 
                 RefreshProgress();
-                if (TryFinishOrKill(assignedRound))
+                if (TryFinishOrKill())
                     yield break;
 
                 yield return UpdateDelay;
@@ -102,16 +101,11 @@ namespace PhEngine.Core.Operation
             var result = await WaitUntilFinishTask();
             switch (result)
             {
-                case Ending.Finish:
-                {
+                case EndingStatus.Ended:
                     NotifyFinish();
-                    if (IsShouldRepeat())
-                        await Task();
-                    else
-                        CurrentRound = 0;
                     break;
-                }
-                case Ending.Cancel:
+                
+                case EndingStatus.Cancelled:
                     NotifyCancel();
                     break;
             }
@@ -128,23 +122,23 @@ namespace PhEngine.Core.Operation
             await UniTask.Yield();
         }
 
-        async UniTask<Ending> WaitUntilFinishTask()
+        async UniTask<EndingStatus> WaitUntilFinishTask()
         {
             while (true)
             {
                 PassTimeByDeltaTime();
-                var runningStatus = GetEndingStatus(CurrentRound);
-                if (runningStatus != Ending.NotReached)
+                var runningStatus = GetEndingStatus();
+                if (runningStatus != EndingStatus.NotReached)
                     return runningStatus;
 
                 InvokeOnUpdate();
-                runningStatus = GetEndingStatus(CurrentRound);
-                if (runningStatus != Ending.NotReached)
+                runningStatus = GetEndingStatus();
+                if (runningStatus != EndingStatus.NotReached)
                     return runningStatus;
 
                 RefreshProgress();
-                runningStatus = GetEndingStatus(CurrentRound);
-                if (runningStatus != Ending.NotReached)
+                runningStatus = GetEndingStatus();
+                if (runningStatus != EndingStatus.NotReached)
                     return runningStatus;
 
                 if (UpdateDelay != null)

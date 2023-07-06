@@ -4,14 +4,14 @@ namespace PhEngine.Core.Operation
 {
     public interface IRequestOperation
     {
-        internal void AppendOnFailOneShot(Action callback);
-        internal void AppendOnSuccessOneShot(Action callback);
+        internal void BindOnShotOnFailTypeless(Action callback);
+        internal void BindOneShotOnSuccessTypeless(Action callback);
     }
     
     [Serializable]
     public class RequestOperation<T> : Operation, IRequestOperation
     {
-        void IRequestOperation.AppendOnFailOneShot(Action callback)
+        void IRequestOperation.BindOnShotOnFailTypeless(Action callback)
         {
             OnFail += CallOneTime;
             void CallOneTime(T val)
@@ -21,7 +21,7 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        void IRequestOperation.AppendOnSuccessOneShot(Action callback)
+        void IRequestOperation.BindOneShotOnSuccessTypeless(Action callback)
         {
             OnSuccess += CallOneTime;
             void CallOneTime(T val)
@@ -108,6 +108,40 @@ namespace PhEngine.Core.Operation
         internal void SetOnReceiveResponse(Action callback)
         {
             OnReceiveResponse = callback;
+        }
+
+        #endregion
+
+        #region One-Shot Action Bindings
+
+        internal void BindOneShotOnFail(Action<T> callback)
+        {
+            OnFail += Call;
+            void Call(T value)
+            {
+                callback?.Invoke(value);
+                OnFail -= Call;
+            }
+        }
+
+        internal void BindOneShotOnSuccess(Action<T> callback)
+        {
+            OnSuccess  += Call;
+            void Call(T value)
+            {
+                callback?.Invoke(value);
+                OnSuccess -= Call;
+            }
+        }
+
+        internal void BindOneShotOnReceiveResponse(Action callback)
+        {
+            OnReceiveResponse  += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnReceiveResponse -= Call;
+            }
         }
 
         #endregion

@@ -9,7 +9,7 @@ namespace PhEngine.Core.Operation
         public bool IsStarted { get; private set; }
         public bool IsFinished { get; private set; }
         public bool IsPaused { get; private set; }
-        
+
         //Actions
         public event Action<float> OnProgress;
         public event Action<TimeSpan> OnElapsedDeltaTime;
@@ -23,7 +23,6 @@ namespace PhEngine.Core.Operation
         //Behaviors
         public Func<float> ProgressGetter { get; protected set; }
         public Func<bool> ExpireCondition { get; protected set; }
-        public Func<bool> RepeatCondition { get; protected set; }
         public event Func<bool> GuardCondition;
         public Flow ParentFlow { get; private set; }
 
@@ -33,7 +32,6 @@ namespace PhEngine.Core.Operation
         public TimeSpan ElapsedDeltaTime { get; private set; }
         public DateTime? StartTime { get; private set; }
         public DateTime? EndTime { get; private set; }
-        public int CurrentRound { get; protected set; }
         public float TimeScale { get; private set; } = 1f;
         public CustomYieldInstruction StartDelay { get; protected set; }
         public CustomYieldInstruction UpdateDelay { get; protected set; }
@@ -56,7 +54,6 @@ namespace PhEngine.Core.Operation
         }
         
         protected virtual bool IsShouldFinish => CurrentProgress >= 1f;
-        public bool IsShouldRepeat() => RepeatCondition != null && RepeatCondition.Invoke();
         static DateTime GetCurrentDeviceTime() => DateTimeFormat == DateTimeFormat.UTC ? DateTime.UtcNow : DateTime.Now;
         
         #endregion
@@ -89,6 +86,16 @@ namespace PhEngine.Core.Operation
             
             RunInternally();
         }
+
+        public void Reset()
+        {
+            ResetProgress();
+            IsFinished = false;
+            StartTime = GetCurrentDeviceTime();
+            startTimeFromStartup = Time.realtimeSinceStartup;
+            endTimeFromStartup = null;
+            EndTime = null;
+        }
         
         public void Cancel()
         {
@@ -113,7 +120,7 @@ namespace PhEngine.Core.Operation
             }
 
             IsPaused = false;
-            NotifyFinishAndTryRepeat();
+            NotifyFinish();
         }
 
         public void Pause()
@@ -160,7 +167,7 @@ namespace PhEngine.Core.Operation
 
             if (TryStopByGuardCondition()) 
                 return false;
-
+            
             NotifyStart();
             return true;
         }
@@ -178,14 +185,8 @@ namespace PhEngine.Core.Operation
         
         protected virtual void NotifyStart()
         {
-            ResetProgress();
-            IsFinished = false;
+            Reset();
             IsStarted = true;
-            StartTime = GetCurrentDeviceTime();
-            startTimeFromStartup = Time.realtimeSinceStartup;
-            endTimeFromStartup = null;
-            EndTime = null;
-            CurrentRound++;
         }
         
         protected virtual void NotifyCancel()
@@ -195,12 +196,6 @@ namespace PhEngine.Core.Operation
             endTimeFromStartup = null;
             EndTime = null;
             IsStarted = false;
-        }
-        
-        protected void NotifyFinishAndTryRepeat()
-        {
-            NotifyFinish();
-            TryRepeat();
         }
 
         protected virtual void NotifyFinish()
@@ -212,23 +207,15 @@ namespace PhEngine.Core.Operation
             InvokeOnFinish();
         }
 
-        protected virtual void TryRepeat()
+        protected virtual bool TryFinishOrKill()
         {
-            if (IsShouldRepeat())
-                RunInternally();
-            else
-                CurrentRound = 0;
-        }
-        
-        protected virtual bool TryFinishOrKill(int round)
-        {
-            var status = GetEndingStatus(round);
+            var status = GetEndingStatus();
             switch (status)
             {
-                case Ending.Finish:
-                    NotifyFinishAndTryRepeat();
+                case EndingStatus.Ended:
+                    NotifyFinish();
                     return true;
-                case Ending.Cancel:
+                case EndingStatus.Cancelled:
                     NotifyCancel();
                     return true;
                 default:
@@ -236,20 +223,17 @@ namespace PhEngine.Core.Operation
             }
         }
 
-        protected Ending GetEndingStatus(int round)
+        protected EndingStatus GetEndingStatus()
         {
-            if (CurrentRound != round)
-                return Ending.Finish;
-
             if (ExpireCondition != null && ExpireCondition.Invoke())
-                return Ending.Cancel;
+                return EndingStatus.Cancelled;
 
-            return !IsShouldFinish ? Ending.NotReached : Ending.Finish;
+            return !IsShouldFinish ? EndingStatus.NotReached : EndingStatus.Ended;
         }
 
-        protected enum Ending
+        protected enum EndingStatus
         {
-            NotReached, Finish, Cancel
+            NotReached, Ended, Cancelled
         }
         
         #endregion
@@ -341,13 +325,13 @@ namespace PhEngine.Core.Operation
         {
             OnStart = callback;
         }
-        
+
         internal void SetOnUpdate(Action callback)
         {
             OnUpdate = callback;
         }
         
-        internal void SetOnTimeChange(Action<TimeSpan> callback)
+        internal void SetOnElapsedDeltaTimeChange(Action<TimeSpan> callback)
         {
             OnElapsedDeltaTime = callback;
         }
@@ -378,6 +362,90 @@ namespace PhEngine.Core.Operation
         }
 
         #endregion
+
+        #region One-Shot Action Bindings
+
+        internal void BindOneShotOnStart(Action callback)
+        {
+            OnStart += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnStart -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnFinish(Action callback)
+        {
+            OnFinish += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnFinish -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnCancel(Action callback)
+        {
+            OnCancel += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnCancel -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnPause(Action callback)
+        {
+            OnPause += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnPause -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnResume(Action callback)
+        {
+            OnResume += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnResume -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnUpdate(Action callback)
+        {
+            OnUpdate += Call;
+            void Call()
+            {
+                callback?.Invoke();
+                OnUpdate -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnElapsedDeltaTime(Action<TimeSpan> callback)
+        {
+            OnElapsedDeltaTime += Call;
+            void Call(TimeSpan timeSpan)
+            {
+                callback?.Invoke(timeSpan);
+                OnElapsedDeltaTime -= Call;
+            }
+        }
+        
+        internal void BindOneShotOnProgress(Action<float> callback)
+        {
+            OnProgress += Call;
+            void Call(float value)
+            {
+                callback?.Invoke(value);
+                OnProgress -= Call;
+            }
+        }
+
+        #endregion
         
         #region Internal Behaviour Setter
         
@@ -386,9 +454,6 @@ namespace PhEngine.Core.Operation
 
         internal void SetStartDelay(CustomYieldInstruction value) 
             => StartDelay = value;
-        
-        internal void SetRepeatIf(Func<bool> repeatCondition)
-            => RepeatCondition = repeatCondition;
         
         internal void SetExpireIf(Func<bool> expireCondition)
             => ExpireCondition = expireCondition;

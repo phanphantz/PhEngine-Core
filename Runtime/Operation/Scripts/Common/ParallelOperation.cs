@@ -9,6 +9,10 @@ namespace PhEngine.Core.Operation
         public ParallelOperation(OnStopBehavior stopBehavior, params Operation[] operations) : base(stopBehavior, operations)
         {
         }
+        
+        public ParallelOperation(params Operation[] operations) : base(operations)
+        {
+        }
     }
     
     public class ParallelOperation<T> : GroupedOperation<T> where T : Operation
@@ -20,12 +24,20 @@ namespace PhEngine.Core.Operation
         {
             OnStart += RunAll;
         }
+        
+        public ParallelOperation(params T[] operations) : base(OnStopBehavior.Skip, operations)
+        {
+            OnStart += RunAll;
+        }
 
         void RunAll()
         {
             lazyProgress = 0;
             foreach (var operation in Operations)
+            {
+                BindStepBasedActions(operation);
                 operation.Run();
+            }
         }
 
         protected override void RefreshStepProgress(float value)

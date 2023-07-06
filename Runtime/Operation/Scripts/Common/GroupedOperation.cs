@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace PhEngine.Core.Operation
@@ -10,18 +11,17 @@ namespace PhEngine.Core.Operation
         [SerializeField] T[] operations;
 
         public OnStopBehavior OnStopBehavior => onStopBehavior;
-        [SerializeField] OnStopBehavior onStopBehavior;
+        [SerializeField] OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll;
         
         public int Count { get; private set; }
-        
-        public GroupedOperation(OnStopBehavior onStopBehavior = OnStopBehavior.CancelAll, params T[] operations)
+
+        protected GroupedOperation(OnStopBehavior onStopBehavior, params T[] operations)
         {
             SetOperations(operations);
             SetOnStopBehavior(onStopBehavior);
             ProgressGetter = GetProgress;
-            OnStart += BindStepBasedActionsToAllOperations;
         }
-        
+
         public void SetOnStopBehavior(OnStopBehavior value)
         {
             onStopBehavior = value;
@@ -32,30 +32,23 @@ namespace PhEngine.Core.Operation
             operations = values;
             Count = operations.Length;
         }
-        
-        void BindStepBasedActionsToAllOperations()
-        {
-            foreach (var operation in operations)
-                BindStepBasedActions(operation);
-        }
 
         protected void BindStepBasedActions(T operation)
         {
             //Every bindings to operations need to be removed after canceled and finished
+            operation.OnProgress -= RefreshStepProgress;
             operation.OnProgress += RefreshStepProgress;
-            operation.OnCancel += NotifyStopping;
-            operation.OnCancel += UnbindActions;
-            operation.OnFinish += UnbindActions;
+            
+            operation.BindOneShotOnCancel(NotifyStopping);
+            operation.BindOneShotOnCancel(UnbindOnProgress);
+            operation.BindOneShotOnFinish(UnbindOnProgress);
             
             if (operation is IRequestOperation requestOperation)
-                requestOperation.AppendOnFailOneShot(NotifyStopping);
+                requestOperation.BindOnShotOnFailTypeless(NotifyStopping);
             
-            void UnbindActions()
+            void UnbindOnProgress()
             {
                 operation.OnProgress -= RefreshStepProgress;
-                operation.OnCancel -= NotifyStopping;
-                operation.OnCancel -= UnbindActions;
-                operation.OnFinish -= UnbindActions;
             }
         }
         

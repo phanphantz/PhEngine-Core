@@ -22,6 +22,24 @@ namespace PhEngine.Core.Operation
             return operation;
         }
         
+        public static RequestOperation<T> BindOneShotOnReceiveResponse<T>(this RequestOperation<T> operation, Action callback) where T : new()
+        {
+            operation.BindOneShotOnReceiveResponse(callback);
+            return operation;
+        }
+        
+        public static RequestOperation<T> BindOneShotOnSuccess<T>(this RequestOperation<T> operation, Action<T> callback) where T : new()
+        {
+            operation.BindOneShotOnSuccess(callback);
+            return operation;
+        }
+        
+        public static RequestOperation<T> BindOneShotOnFail<T>(this RequestOperation<T> operation, Action<T> callback) where T : new()
+        {
+            operation.BindOneShotOnFail(callback);
+            return operation;
+        }
+        
         public static RequestOperation<T> SetResultCreation<T>(this RequestOperation<T> operation, Func<T> creator) where T : new()
         {
             operation.SetResultCreation(creator);
