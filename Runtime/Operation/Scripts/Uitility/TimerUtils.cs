@@ -49,11 +49,14 @@ namespace PhEngine.Core.Operation
         public static Operation ClearDelay(this Operation operation)
             => SetStartDelay(operation, TimeSpan.Zero);
 
+        public static Operation SetExpireAfter(this Operation operation, float durationBeforeExpire, bool isUseRealTime)
+            => SetExpireAfter(operation, TimeSpan.FromSeconds(durationBeforeExpire), isUseRealTime);
+
         public static Operation SetExpireAfter(this Operation operation, TimeSpan durationBeforeExpire, bool isUseRealTime)
         {
-            var elapsedTime = isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime;
+            var elapsedTime = isUseRealTime ? operation.ElapsedRealTime : TimeSpan.FromSeconds(operation.ElapsedDeltaTime);
             var expireTime = elapsedTime + durationBeforeExpire;
-            return SetExpireIf(operation, () => (isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime) >= expireTime);
+            return SetExpireIf(operation, () => (isUseRealTime ? operation.ElapsedRealTime : TimeSpan.FromSeconds(operation.ElapsedDeltaTime)) >= expireTime);
         }
 
         public static Operation ClearExpiration(this Operation operation)

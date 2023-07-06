@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace PhEngine.Core.Operation
@@ -9,7 +8,7 @@ namespace PhEngine.Core.Operation
         public UnityEvent onStartEvent = new UnityEvent();
         public UnityEvent onUpdateEvent = new UnityEvent();
         public UnityEvent<float> onProgressEvent = new UnityEvent<float>();
-        public UnityEvent<TimeSpan> onElapsedDeltaTimeEvent = new UnityEvent<TimeSpan>();
+        public UnityEvent<float> onElapsedDeltaTimeEvent = new UnityEvent<float>();
         public UnityEvent onFinishEvent = new UnityEvent();
         public UnityEvent onCancelEvent = new UnityEvent();
         public UnityEvent onPauseEvent = new UnityEvent();
@@ -20,7 +19,7 @@ namespace PhEngine.Core.Operation
             operation.OnStart += OnStartEvent;
             operation.OnUpdate += OnUpdateEvent;
             operation.OnProgress += OnProgressEvent;
-            operation.OnElapsedDeltaTime += OnElapsedDeltaTimeEvent;
+            operation.OnDeltaTimeChange += OnDeltaTimeChangeEvent;
             operation.OnFinish += OnFinishEvent;
             operation.OnCancel +=  OnCancelEvent;
             operation.OnPause += OnPauseEvent;
@@ -47,9 +46,9 @@ namespace PhEngine.Core.Operation
             onFinishEvent?.Invoke();
         }
 
-        void OnElapsedDeltaTimeEvent(TimeSpan timeSpan)
+        void OnDeltaTimeChangeEvent(float value)
         {
-            onElapsedDeltaTimeEvent?.Invoke(timeSpan);
+            onElapsedDeltaTimeEvent?.Invoke(value);
         }
 
         void OnProgressEvent(float progress)
@@ -72,7 +71,7 @@ namespace PhEngine.Core.Operation
             operation.OnStart -= OnStartEvent;
             operation.OnUpdate -= OnUpdateEvent;
             operation.OnProgress -= OnProgressEvent;
-            operation.OnElapsedDeltaTime -= OnElapsedDeltaTimeEvent;
+            operation.OnDeltaTimeChange -= OnDeltaTimeChangeEvent;
             operation.OnFinish -= OnFinishEvent;
             operation.OnCancel -=  OnCancelEvent;
             operation.OnPause -= OnPauseEvent;

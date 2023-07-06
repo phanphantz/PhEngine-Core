@@ -17,7 +17,7 @@ namespace PhEngine.Core.Operation
 
         //Actions
         public event Action<float> OnProgress;
-        public event Action<TimeSpan> OnElapsedDeltaTime;
+        public event Action<float> OnDeltaTimeChange;
         public event Action OnStart;
         public event Action OnUpdate;
         public event Action OnPause;
@@ -34,7 +34,7 @@ namespace PhEngine.Core.Operation
         //Time
         public static DateTimeFormat DateTimeFormat { get; set; } = DateTimeFormat.UTC;
         public float CurrentProgress { get; private set; }
-        public TimeSpan ElapsedDeltaTime { get; private set; }
+        public float ElapsedDeltaTime { get; private set; }
         public DateTime? StartTime { get; private set; }
         public DateTime? EndTime { get; private set; }
         public float TimeScale { get; private set; } = 1f;
@@ -267,7 +267,7 @@ namespace PhEngine.Core.Operation
         
         void ResetProgress()
         {
-            ElapsedDeltaTime = TimeSpan.Zero;
+            ElapsedDeltaTime = 0;
             ForceSetProgress(0);
         }
         
@@ -280,7 +280,7 @@ namespace PhEngine.Core.Operation
         protected void PassTimeByDeltaTime()
         {
             var passedTime = Time.deltaTime * TimeScale;
-            ElapsedDeltaTime += TimeSpan.FromSeconds(passedTime);
+            ElapsedDeltaTime += passedTime;
             InvokeOnDeltaTimeChange();
         }
 
@@ -306,7 +306,7 @@ namespace PhEngine.Core.Operation
         
         public void InvokeOnDeltaTimeChange()
         {
-            OnElapsedDeltaTime?.Invoke(ElapsedDeltaTime);
+            OnDeltaTimeChange?.Invoke(ElapsedDeltaTime);
         }
         
         public void InvokeOnProgress(float progress)
@@ -348,9 +348,9 @@ namespace PhEngine.Core.Operation
             OnUpdate = callback;
         }
         
-        internal void SetOnElapsedDeltaTimeChange(Action<TimeSpan> callback)
+        internal void SetOnDeltaTimeChange(Action<float> callback)
         {
-            OnElapsedDeltaTime = callback;
+            OnDeltaTimeChange = callback;
         }
 
         internal void SetOnProgress(Action<float> callback)
@@ -442,13 +442,13 @@ namespace PhEngine.Core.Operation
             }
         }
         
-        internal void BindOneShotOnElapsedDeltaTime(Action<TimeSpan> callback)
+        internal void BindOneShotOnDeltaTimeChange(Action<float> callback)
         {
-            OnElapsedDeltaTime += Call;
-            void Call(TimeSpan timeSpan)
+            OnDeltaTimeChange += Call;
+            void Call(float value)
             {
-                callback?.Invoke(timeSpan);
-                OnElapsedDeltaTime -= Call;
+                callback?.Invoke(value);
+                OnDeltaTimeChange -= Call;
             }
         }
         

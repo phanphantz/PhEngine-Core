@@ -20,7 +20,7 @@ namespace PhEngine.Core.Operation
             => SetProgressOn(operation,() => GetProgressScaleFromTime(operation, duration, isUseRealTime));
 
         static float GetProgressScaleFromTime(Operation operation, TimeSpan duration, bool isUseRealTime)
-            => (float)((isUseRealTime ? operation.ElapsedRealTime : operation.ElapsedDeltaTime).TotalSeconds / duration.TotalSeconds);
+            => (float)((isUseRealTime ? operation.ElapsedRealTime : TimeSpan.FromSeconds(operation.ElapsedDeltaTime)).TotalSeconds / duration.TotalSeconds);
         
         public static Operation ClearProgression(this Operation operation)
             => SetProgressOn(operation,null);
