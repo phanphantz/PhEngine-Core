@@ -1,12 +1,17 @@
 using System;
 using UnityEngine.Networking;
 
+#if UNITASK
+using Cysharp.Threading.Tasks;
+#endif
+
 namespace PhEngine.Core.Operation
 {
     [Serializable]
     public abstract class NetworkOperation<T> : RequestOperation<T>
     {
         protected UnityWebRequest WebRequest { get; private set; }
+        public T Result { get; private set; }
         
         protected NetworkOperation()
         {
@@ -33,7 +38,13 @@ namespace PhEngine.Core.Operation
 
         T CreateResult()
         {
-            return CreateResultFromWebRequest(WebRequest);
+            SetResult(CreateResultFromWebRequest(WebRequest));
+            return Result;
+        }
+
+        protected void SetResult(T value)
+        {
+            Result = value;
         }
 
         public override void ProcessResult(T result)
@@ -41,6 +52,14 @@ namespace PhEngine.Core.Operation
             base.ProcessResult(result);
             WebRequest.Dispose();
         }
+        
+#if UNITASK
+        public async UniTask<T> ResultTask()
+        {
+            await Task();
+            return Result;
+        }
+#endif
 
         protected virtual bool IsNetworkOperationSuccess()
         {

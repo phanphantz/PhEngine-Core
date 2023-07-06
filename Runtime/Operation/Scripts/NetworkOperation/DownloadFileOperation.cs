@@ -7,7 +7,6 @@ namespace PhEngine.Core.Operation
     public class DownloadFileOperation : NetworkOperation<DownloadFileResult>
     {
         public DownloadFileRequest Request { get; }
-
         public DownloadFileOperation(DownloadFileRequest request)
         {
             Request = request;

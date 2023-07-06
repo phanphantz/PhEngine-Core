@@ -6,7 +6,7 @@ namespace PhEngine.Core.Operation
     public class GetSpriteByURLOperation : NetworkOperation<Sprite>
     {
         public string Url { get; }
-
+        
         public GetSpriteByURLOperation(string url)
         {
             Url = url;
