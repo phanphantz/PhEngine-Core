@@ -91,7 +91,7 @@ namespace PhEngine.Core.Operation
         {
             await PreProcessTask();
             if (!TryStart())
-                return;
+                throw new OperationCanceledException();
 
             if (StartDelay != null)
                 await StartDelay;
@@ -107,7 +107,7 @@ namespace PhEngine.Core.Operation
                 
                 case EndingStatus.Cancelled:
                     NotifyCancel();
-                    break;
+                    throw new OperationCanceledException();
             }
             await PostProcessTask();
         }
@@ -148,7 +148,13 @@ namespace PhEngine.Core.Operation
             }
         }
 #endif
-        
+
+        protected override void NotifyFinish()
+        {
+            base.NotifyFinish();
+            isUseCoroutine = false;
+        }
+
         protected override void NotifyCancel()
         {
             if (isUseCoroutine)

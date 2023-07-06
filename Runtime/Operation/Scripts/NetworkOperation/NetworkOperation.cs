@@ -57,6 +57,9 @@ namespace PhEngine.Core.Operation
         public async UniTask<T> ResultTask()
         {
             await Task();
+            if (Result == null)
+                throw new OperationCanceledException();
+            
             return Result;
         }
 #endif

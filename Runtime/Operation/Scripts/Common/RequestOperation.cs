@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 
 namespace PhEngine.Core.Operation
 {
@@ -38,6 +39,8 @@ namespace PhEngine.Core.Operation
         public event Func<bool> SuccessCondition;
         public Func<T> ResultCreation { get; protected set; }
 
+        bool wasSuccess;
+
         protected RequestOperation() 
         {
             OnFinish += ReceiveResponse;
@@ -54,7 +57,8 @@ namespace PhEngine.Core.Operation
 
         public virtual void ProcessResult(T result)
         {
-            if (IsSuccess())
+            wasSuccess = IsSuccess();
+            if (wasSuccess)
                 InvokeOnSuccess(result);
             else
                 InvokeOnFail(result);
@@ -67,6 +71,13 @@ namespace PhEngine.Core.Operation
                 InvokeOnFail(GetGuardConditionResult());
             
             return result;
+        }
+
+        protected override async UniTask PostProcessTask()
+        {
+            await base.PostProcessTask();
+            if (!wasSuccess)
+                throw new OperationCanceledException();
         }
 
         protected virtual T GetGuardConditionResult() => default;
