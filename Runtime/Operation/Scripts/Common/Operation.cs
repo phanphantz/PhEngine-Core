@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 #if UNITASK
@@ -89,6 +90,7 @@ namespace PhEngine.Core.Operation
 #if UNITASK
         public async UniTask Task()
         {
+            await PreProcessTask();
             if (!TryStart())
                 return;
 
@@ -97,7 +99,7 @@ namespace PhEngine.Core.Operation
 
             InvokeOnStart();
 
-            var result = await InternalTask();
+            var result = await WaitUntilFinishTask();
             switch (result)
             {
                 case Ending.Finish:
@@ -113,9 +115,20 @@ namespace PhEngine.Core.Operation
                     NotifyCancel();
                     break;
             }
+            await PostProcessTask();
         }
 
-        async UniTask<Ending> InternalTask()
+        protected virtual async UniTask PreProcessTask()
+        {
+            await UniTask.Yield();
+        }
+        
+        protected virtual async UniTask PostProcessTask()
+        {
+            await UniTask.Yield();
+        }
+
+        async UniTask<Ending> WaitUntilFinishTask()
         {
             while (true)
             {
