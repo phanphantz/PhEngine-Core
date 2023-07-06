@@ -13,6 +13,9 @@ namespace PhEngine.Core.Operation
         public static Operation AddProgressBy(this Operation operation, Func<float> progressAdder)
             => SetProgressOn(operation,() => operation.CurrentProgress + progressAdder.Invoke());
 
+        public static Operation SetDuration(this Operation operation, float duration, bool isUseRealTime)
+            => SetProgressOn(operation,() => GetProgressScaleFromTime(operation, TimeSpan.FromSeconds(duration), isUseRealTime));
+
         public static Operation SetDuration(this Operation operation, TimeSpan duration, bool isUseRealTime)
             => SetProgressOn(operation,() => GetProgressScaleFromTime(operation, duration, isUseRealTime));
 
