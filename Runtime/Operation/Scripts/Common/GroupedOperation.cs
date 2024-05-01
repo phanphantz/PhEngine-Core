@@ -43,7 +43,7 @@ namespace PhEngine.Core.Operation
             operation.BindOnFinish(UnbindOnProgress, true);
             
             if (operation is IRequestOperation requestOperation)
-                requestOperation.BindOnFailTypeless(NotifyStopping);
+                requestOperation.BindOnFailTypeless(NotifyStopping, true);
             
             void UnbindOnProgress()
             {
