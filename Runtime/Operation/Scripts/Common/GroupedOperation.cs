@@ -38,12 +38,12 @@ namespace PhEngine.Core.Operation
             operation.OnProgress -= RefreshStepProgress;
             operation.OnProgress += RefreshStepProgress;
             
-            operation.BindOneShotOnCancel(NotifyStopping);
-            operation.BindOneShotOnCancel(UnbindOnProgress);
-            operation.BindOneShotOnFinish(UnbindOnProgress);
+            operation.BindOnCancel(NotifyStopping, true);
+            operation.BindOnCancel(UnbindOnProgress, true);
+            operation.BindOnFinish(UnbindOnProgress, true);
             
             if (operation is IRequestOperation requestOperation)
-                requestOperation.BindOnShotOnFailTypeless(NotifyStopping);
+                requestOperation.BindOnFailTypeless(NotifyStopping);
             
             void UnbindOnProgress()
             {

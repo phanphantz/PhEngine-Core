@@ -336,129 +336,93 @@ namespace PhEngine.Core.Operation
         
         #endregion
 
-        #region Internal Action Bindings
+        #region Action Bindings
 
-        internal void SetOnStart(Action callback)
-        {
-            OnStart = callback;
-        }
-
-        internal void SetOnUpdate(Action callback)
-        {
-            OnUpdate = callback;
-        }
-        
-        internal void SetOnDeltaTimeChange(Action<float> callback)
-        {
-            OnDeltaTimeChange = callback;
-        }
-
-        internal void SetOnProgress(Action<float> callback)
-        {
-            OnProgress = callback;
-        }
-        
-        internal void SetOnFinish(Action callback)
-        {
-            OnFinish = callback;
-        }
-        
-        internal void SetOnCancel(Action callback)
-        {
-            OnCancel = callback;
-        }
-        
-        internal void SetOnResume(Action callback)
-        {
-            OnResume = callback;
-        }
-
-        internal void SetOnPause(Action callback)
-        {
-            OnPause = callback;
-        }
-
-        #endregion
-
-        #region One-Shot Action Bindings
-
-        internal void BindOneShotOnStart(Action callback)
+        internal void BindOnStart(Action callback, bool isOneShot = false)
         {
             OnStart += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnStart -= Call;
+                if (isOneShot) 
+                    OnStart -= Call;
             }
         }
         
-        internal void BindOneShotOnFinish(Action callback)
+        internal void BindOnFinish(Action callback, bool isOneShot = false)
         {
             OnFinish += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnFinish -= Call;
+                if (isOneShot)
+                    OnFinish -= Call;
             }
         }
         
-        internal void BindOneShotOnCancel(Action callback)
+        internal void BindOnCancel(Action callback, bool isOneShot = false)
         {
             OnCancel += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnCancel -= Call;
+                if (isOneShot)
+                    OnCancel -= Call;
             }
         }
         
-        internal void BindOneShotOnPause(Action callback)
+        internal void BindOnPause(Action callback, bool isOneShot = false)
         {
             OnPause += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnPause -= Call;
+                if (isOneShot)
+                    OnPause -= Call;
             }
         }
         
-        internal void BindOneShotOnResume(Action callback)
+        internal void BindOnResume(Action callback, bool isOneShot = false)
         {
             OnResume += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnResume -= Call;
+                if (isOneShot)
+                    OnResume -= Call;
             }
         }
         
-        internal void BindOneShotOnUpdate(Action callback)
+        internal void BindOnUpdate(Action callback, bool isOneShot = false)
         {
             OnUpdate += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnUpdate -= Call;
+                if (isOneShot)
+                    OnUpdate -= Call;
             }
         }
         
-        internal void BindOneShotOnDeltaTimeChange(Action<float> callback)
+        internal void BindOnDeltaTimeChange(Action<float> callback, bool isOneShot = false)
         {
             OnDeltaTimeChange += Call;
             void Call(float value)
             {
                 callback?.Invoke(value);
-                OnDeltaTimeChange -= Call;
+                if (isOneShot)
+                    OnDeltaTimeChange -= Call;
             }
         }
         
-        internal void BindOneShotOnProgress(Action<float> callback)
+        internal void BindOnProgress(Action<float> callback, bool isOneShot = false)
         {
             OnProgress += Call;
             void Call(float value)
             {
                 callback?.Invoke(value);
-                OnProgress -= Call;
+                if (isOneShot)
+                    OnProgress -= Call;
             }
         }
 
