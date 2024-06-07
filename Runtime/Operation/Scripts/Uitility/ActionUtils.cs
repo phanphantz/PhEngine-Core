@@ -4,99 +4,45 @@ namespace PhEngine.Core.Operation
 {
     public static class ActionUtils
     {
-        public static Operation SetOnStart(this Operation operation, Action callback)
+        public static T BindOnStart<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnStart(callback);
+            operation.BindOnStart(callback, isOneShot);
             return operation;
         }
 
-        public static Operation SetOnUpdate(this Operation operation, Action callback)
+        public static T BindOnUpdate<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnUpdate(callback);
+            operation.BindOnUpdate(callback, isOneShot);
             return operation;
         }
 
-        public static Operation SetOnElapsedDeltaTimeChange(this Operation operation, Action<TimeSpan> callback)
+        public static T BindOnProgress<T>(this T operation, Action<float> callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnElapsedDeltaTimeChange(callback);
+            operation.BindOnProgress(callback, isOneShot);
             return operation;
         }
 
-        public static Operation SetOnProgress(this Operation operation, Action<float> callback)
+        public static T BindOnFinish<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnProgress(callback);
+            operation.BindOnFinish(callback, isOneShot);
             return operation;
         }
 
-        public static Operation SetOnFinish(this Operation operation, Action callback)
+        public static T BindOnCancel<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnFinish(callback);
-            return operation;
-        }
-
-        public static Operation SetOnCancel(this Operation operation, Action callback)
-        {
-            operation.SetOnCancel(callback);
+            operation.BindOnCancel(callback, isOneShot);
             return operation;
         }
         
-        public static Operation SetOnPause(this Operation operation, Action callback)
+        public static T BindOnPause<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnPause(callback);
+            operation.BindOnPause(callback, isOneShot);
             return operation;
         }
         
-        public static Operation SetOnResume(this Operation operation, Action callback)
+        public static T BindOnResume<T>(this T operation, Action callback, bool isOneShot = false) where T : Operation
         {
-            operation.SetOnResume(callback);
-            return operation;
-        }
-        
-        public static Operation BindOneShotOnStart(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnStart(callback);
-            return operation;
-        }
-
-        public static Operation BindOneShotOnUpdate(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnUpdate(callback);
-            return operation;
-        }
-
-        public static Operation BindOneShotOnElapsedDeltaTime(this Operation operation, Action<TimeSpan> callback)
-        {
-            operation.BindOneShotOnElapsedDeltaTime(callback);
-            return operation;
-        }
-
-        public static Operation BindOneShotOnProgress(this Operation operation, Action<float> callback)
-        {
-            operation.BindOneShotOnProgress(callback);
-            return operation;
-        }
-
-        public static Operation BindOneShotOnFinish(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnFinish(callback);
-            return operation;
-        }
-
-        public static Operation BindOneShotOnCancel(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnCancel(callback);
-            return operation;
-        }
-        
-        public static Operation BindOneShotOnPause(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnPause(callback);
-            return operation;
-        }
-        
-        public static Operation BindOneShotOnResume(this Operation operation, Action callback)
-        {
-            operation.BindOneShotOnResume(callback);
+            operation.BindOnResume(callback, isOneShot);
             return operation;
         }
     }

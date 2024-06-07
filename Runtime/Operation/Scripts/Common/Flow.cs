@@ -23,34 +23,38 @@ namespace PhEngine.Core.Operation
             AddRange(operations);
         }
 
-        public void Add(Operation operation)
+        public Flow Add(Operation operation)
         {
             operationList.Add(operation);
             operation.SetParentFlow(this);
+            return this;
         }
 
-        public void Insert(int index, Operation operation)
+        public Flow Insert(int index, Operation operation)
         {
             operationList.Insert(index, operation);
             operation.SetParentFlow(this);
+            return this;
         }
 
-        public void InsertBefore(Operation existingStep, Operation operationToInsert)
+        public Flow InsertBefore(Operation existingStep, Operation operationToInsert)
         {
-            InsertOneShot(operationList.IndexOf(existingStep), operationToInsert);
+            return InsertOneShot(operationList.IndexOf(existingStep), operationToInsert);
         }
 
-        public void InsertOneShot(int index, Operation operation)
+        public Flow InsertOneShot(int index, Operation operation)
         {
             Insert(index, operation);
             operation.OnFinish += () => Remove(operation);
             operation.OnCancel += () => Remove(operation);
+            return this;
         }
 
-        public void AddRange(params Operation[] operations)
+        public Flow AddRange(params Operation[] operations)
         {
             foreach (var operation in operations)
                 Add(operation);
+            return this;
         }
 
         public void Remove(Operation operation)
@@ -62,18 +66,19 @@ namespace PhEngine.Core.Operation
             operation.SetParentFlow(null);
         }
 
-        public Operation Add(Action action)
+        public Flow Add(Action action)
         {
             var operation = new Operation(action);
             Add(operation);
-            return operation;
+            return this;
         }
 
-        public void Acquire(Flow flow)
+        public Flow AbsorbFrom(Flow flow)
         {
             var oldOperations = flow.ReleaseOperations();
             AddRange(oldOperations);
             AppendActions(flow);
+            return this;
         }
 
         void AppendActions(Flow flow)
@@ -151,6 +156,11 @@ namespace PhEngine.Core.Operation
         {
             RunAsParallel();
             return new WaitWhile(() => IsBusy);
+        }
+
+        public static Flow Create()
+        {
+            return new Flow();
         }
     }
 }

@@ -8,30 +8,32 @@ namespace PhEngine.Core.Operation
 {
     public interface IRequestOperation
     {
-        internal void BindOnShotOnFailTypeless(Action callback);
-        internal void BindOneShotOnSuccessTypeless(Action callback);
+        internal void BindOnFailTypeless(Action callback, bool isOneShot = false);
+        internal void BindOnSuccessTypeless(Action callback, bool isOneShot = false);
     }
-    
+
     [Serializable]
     public class RequestOperation<T> : Operation, IRequestOperation
     {
-        void IRequestOperation.BindOnShotOnFailTypeless(Action callback)
+        void IRequestOperation.BindOnFailTypeless(Action callback, bool isOneShot)
         {
             OnFail += CallOneTime;
             void CallOneTime(T val)
             {
                 callback.Invoke();
-                OnFail -= CallOneTime;
+                if (isOneShot)
+                    OnFail -= CallOneTime;
             }
         }
 
-        void IRequestOperation.BindOneShotOnSuccessTypeless(Action callback)
+        void IRequestOperation.BindOnSuccessTypeless(Action callback, bool isOneShot)
         {
             OnSuccess += CallOneTime;
             void CallOneTime(T val)
             {
                 callback.Invoke();
-                OnSuccess -= CallOneTime;
+                if (isOneShot)
+                    OnSuccess -= CallOneTime;
             }
         }
         
@@ -108,55 +110,39 @@ namespace PhEngine.Core.Operation
         }
         
         #endregion
+        
+        #region Action Bindings
 
-        #region Internal Action Bindings
-
-        internal void SetOnFail(Action<T> callback)
-        {
-            OnFail = callback;
-        }
-
-        internal void SetOnSuccess(Action<T> callback)
-        {
-            OnSuccess = callback;
-        }
-
-        internal void SetOnReceiveResponse(Action callback)
-        {
-            OnReceiveResponse = callback;
-        }
-
-        #endregion
-
-        #region One-Shot Action Bindings
-
-        internal void BindOneShotOnFail(Action<T> callback)
+        protected void BindOnFailInternally(Action<T> callback, bool isOneShot = false)
         {
             OnFail += Call;
             void Call(T value)
             {
                 callback?.Invoke(value);
-                OnFail -= Call;
+                if (isOneShot)
+                    OnFail -= Call;
             }
         }
 
-        internal void BindOneShotOnSuccess(Action<T> callback)
+        protected void BindOnSuccessInternally(Action<T> callback, bool isOneShot = false)
         {
             OnSuccess  += Call;
             void Call(T value)
             {
                 callback?.Invoke(value);
-                OnSuccess -= Call;
+                if (isOneShot)
+                    OnSuccess -= Call;
             }
         }
 
-        internal void BindOneShotOnReceiveResponse(Action callback)
+        protected void BindOnReceiveResponseInternally(Action callback, bool isOneShot = false)
         {
             OnReceiveResponse  += Call;
             void Call()
             {
                 callback?.Invoke();
-                OnReceiveResponse -= Call;
+                if (isOneShot)
+                    OnReceiveResponse -= Call;
             }
         }
 

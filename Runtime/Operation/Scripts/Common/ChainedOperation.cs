@@ -105,9 +105,9 @@ namespace PhEngine.Core.Operation
         {
             BindStepBasedActions(operation);
             if (operation is IRequestOperation requestOperation)
-                requestOperation.BindOneShotOnSuccessTypeless(RunNextOperation);
+                requestOperation.BindOnSuccessTypeless(RunNextOperation, true);
             else
-                operation.BindOneShotOnFinish(RunNextOperation);
+                operation.BindOnFinish(RunNextOperation, true);
         }
 
         protected void RunNextOperation()
