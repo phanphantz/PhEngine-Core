@@ -5,6 +5,7 @@ namespace PhEngine.Core
     [Serializable]
     public abstract class State
     {
+        public virtual string GetDisplayName() => GetType().Name;
     }
     
     [Serializable]
@@ -74,5 +75,29 @@ namespace PhEngine.Core
     public interface IConditionBasedState
     {
         bool IsShouldEnd { get; }
+    }
+
+    /// <summary>
+    /// This type of state requires a condition check before execution
+    /// </summary>
+    public interface IUnsafeState
+    {
+        bool CheckSafeToRun(out Exception e);
+    }
+
+    /// <summary>
+    /// This type of state can be skipped if requested
+    /// </summary>
+    public interface ISkippableState
+    {
+        
+    }
+
+    /// <summary>
+    /// This type of state will execute a function before being skipped
+    /// </summary>
+    public interface IResolveBeforeSkip : ISkippableState
+    {
+        void ResolveBeforeSkip();
     }
 }
