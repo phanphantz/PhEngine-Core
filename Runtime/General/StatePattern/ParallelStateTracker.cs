@@ -5,7 +5,7 @@ namespace PhEngine.Core
     [Serializable]
     public class ParallelStateTracker : StateTracker
     {
-        protected override void Update()
+        public override void Update()
         {
             var runningStates = RunningStates;
             foreach (var progress in runningStates)

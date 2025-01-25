@@ -5,7 +5,7 @@ namespace PhEngine.Core
     [Serializable]
     public class QueuedStateTracker : StateTracker
     {
-        protected override void Update()
+        public override void Update()
         {
             if (StateCount == 0)
                 return;

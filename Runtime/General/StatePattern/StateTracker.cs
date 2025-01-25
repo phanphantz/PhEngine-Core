@@ -41,8 +41,8 @@ namespace PhEngine.Core
         public event Action<State> OnStateUpdated;
         public event Action<State> OnStateEnded;
         public event Action OnFinishedAll;
-        
-        protected abstract void Update();
+
+        public abstract void Update();
         public virtual StateProgress Append(State state)
         {
             var progress = new StateProgress(state);
