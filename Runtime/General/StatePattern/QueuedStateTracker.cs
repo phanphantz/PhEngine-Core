@@ -3,7 +3,7 @@ using System;
 namespace PhEngine.Core
 {
     [Serializable]
-    public abstract class QueuedStateTracker : StateTracker
+    public class QueuedStateTracker : StateTracker
     {
         protected override void Update()
         {

@@ -3,7 +3,7 @@ using System;
 namespace PhEngine.Core
 {
     [Serializable]
-    public abstract class ParallelStateTracker : StateTracker
+    public class ParallelStateTracker : StateTracker
     {
         protected override void Update()
         {
