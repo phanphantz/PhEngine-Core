@@ -12,6 +12,9 @@ namespace PhEngine.Core
         public float ElapsedTime => elapsedTime;
         [SerializeField] float elapsedTime;
 
+        public bool IsStarted => isStarted;
+        [SerializeField] bool isStarted;
+
         internal StateProgress(State<T> state)
         {
             this.state = state;
@@ -19,6 +22,7 @@ namespace PhEngine.Core
 
         internal void Start(T info)
         {
+            isStarted = true;
             state.Start(info);
         }
         

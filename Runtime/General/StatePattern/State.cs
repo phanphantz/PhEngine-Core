@@ -12,16 +12,16 @@ namespace PhEngine.Core
     public abstract class State<T> : State  where T : StateData
     {
         public T Data { get; protected set; }
-        public event Action OnStart;
+        public event Action OnStarted;
         
         public void Start(T data)
         {
             Data = data;
-            OnStart?.Invoke();
-            OnStarted(Data);
+            OnStart(Data);
+            OnStarted?.Invoke();
         }
 
-        protected abstract void OnStarted(T data);
+        protected abstract void OnStart(T data);
     }
     
     /// <summary>
@@ -29,25 +29,30 @@ namespace PhEngine.Core
     /// </summary>
     public abstract class LongState<T> : State<T> where T : StateData
     {
-        public event Action OnUpdate;
-        public event Action OnEnd;
+        public event Action OnUpdated;
+        public event Action OnEnded;
         public void Update(T data)
         {
             Data = data;
-            OnUpdate?.Invoke();
-            OnUpdated(data);
+            OnUpdate(data);
+            OnUpdated?.Invoke();
         }
         
-        protected abstract void OnUpdated(T data);
+        /// <summary>
+        /// Logics to be executed frame by frame.
+        /// OnUpdated is first called after the frame that this state is started.
+        /// </summary>
+        /// <param name="data"></param>
+        protected abstract void OnUpdate(T data);
 
         public void End(T data)
         {
             Data = data;
-            OnEnd?.Invoke();
-            OnEnded(Data);
+            OnEnd(Data);
+            OnEnded?.Invoke();
         }
 
-        protected abstract void OnEnded(T data);
+        protected abstract void OnEnd(T data);
         public void ForceEnd()
         {
             Data.tracker.ForceEnd(this);

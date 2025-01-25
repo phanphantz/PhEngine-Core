@@ -34,34 +34,6 @@ namespace PhEngine.Core
     }
 
     [Serializable]
-    public abstract class ParallelStateTracker<T> : StateTracker<T> where T : StateData
-    {
-        protected override void Update()
-        {
-            var runningStates = RunningStates;
-            foreach (var progress in runningStates)
-                TryPassTimeAndUpdate(progress);
-
-            foreach (var state in runningStates)
-                TryEnd(state);
-        }
-    }
-
-    [Serializable]
-    public abstract class QueuedStateTracker<T> : StateTracker<T> where T : StateData
-    {
-        protected override void Update()
-        {
-            if (StateCount == 0)
-                return;
-
-            var currentState = FirstStateInList;
-            TryPassTimeAndUpdate(currentState);
-            TryEnd(currentState);
-        }
-    }
-    
-    [Serializable]
     public abstract class StateTracker<T> : StateTracker where T : StateData
     {
         public int StateCount => runningStateList.Count;
@@ -77,21 +49,28 @@ namespace PhEngine.Core
         public event Action OnFinishedAll;
         
         protected abstract void Update();
-        public void Execute(State<T> state)
+        public virtual StateProgress<T> Append(State<T> state)
         {
+            var progress = new StateProgress<T>(state);
+            runningStateList.Add(progress);
+            return progress;
+        }
+
+        protected void Execute(StateProgress<T> progress)
+        {
+            var state = progress.State;
             if (state is IUnsafeState unsafeState && !unsafeState.CheckSafeToRun(out var error))
             {
                 Debug.LogError(unsafeState.GetType().Name + " is not safe to run.\nReason:" + error);
+                Remove(progress);
                 return;
             }
-                
-            var progress = new StateProgress<T>(state);
+            
             progress.Start(PrepareInfo(progress));
-            runningStateList.Add(progress);
             OnStateStarted?.Invoke(state);
             Log("Executed: " + state.GetDisplayName());
         }
-        
+
         protected T PrepareInfo(StateProgress<T> progress)
         {
             var bareInfo = CreateInfo();
