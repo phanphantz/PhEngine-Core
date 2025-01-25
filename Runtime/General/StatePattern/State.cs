@@ -18,13 +18,7 @@ namespace PhEngine.Core
         }
 
         protected abstract void OnStart(StateData data);
-    }
-    
-    /// <summary>
-    /// This type of state runs more than one frame
-    /// </summary>
-    public abstract class LongState : State
-    {
+        
         public event Action OnUpdated;
         public event Action OnEnded;
         public void Update(StateData data)
@@ -56,9 +50,9 @@ namespace PhEngine.Core
     }
     
     /// <summary>
-    /// This type of state ends immediately after execution
+    /// This type of state ends immediately one frame after execution
     /// </summary>
-    public interface ISingleFrameState
+    public interface IEndNextFrameState
     {
     }
 

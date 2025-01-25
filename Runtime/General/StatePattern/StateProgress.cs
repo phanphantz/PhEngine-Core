@@ -28,18 +28,12 @@ namespace PhEngine.Core
         
         internal void PassTime(float deltaTime)
         {
-            if (state is not LongState)
-                return;
-            
             elapsedTime += deltaTime;
         }
 
         internal void Update(StateData info)
         {
-            if (state is not LongState longState)
-                return;
-
-            longState.Update(info);
+            state.Update(info);
         }
 
         public bool IsShouldEnd()
@@ -50,13 +44,12 @@ namespace PhEngine.Core
             if (state is IConditionBasedState conditionBasedState)
                 return conditionBasedState.IsShouldEnd;
 
-            return state is ISingleFrameState;
+            return state is IEndNextFrameState;
         }
 
         internal void End(StateData info)
         {
-            if (state is LongState longState)
-                longState.End(info);
+            state.End(info);
         }
     }
 }

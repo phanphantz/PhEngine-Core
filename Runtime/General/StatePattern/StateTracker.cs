@@ -81,8 +81,6 @@ namespace PhEngine.Core
                 return false;
 
             EndAndRemove(progress);
-            OnStateEnded?.Invoke(progress.State);
-            Log("End: " + progress.State.GetDisplayName());
             return true;
         }
 
@@ -96,6 +94,8 @@ namespace PhEngine.Core
         void EndAndRemove(StateProgress progress)
         {
             progress.End(PrepareInfo(progress));
+            Log("End: " + progress.State.GetDisplayName());
+            OnStateEnded?.Invoke(progress.State);
             Remove(progress);
         }
 
@@ -103,10 +103,7 @@ namespace PhEngine.Core
         {
             runningStateList.Remove(progress);
             if (StateCount == 0)
-            {
                 OnFinishedAll?.Invoke();
-                Log("Finished All States");
-            }
         }
 
         public void ForceEnd(State targetState)
@@ -115,8 +112,8 @@ namespace PhEngine.Core
             if (existingProgress == null)
                 Debug.LogError("Cannot end the target state since it was not found on the State Tracker");
             
-            EndAndRemove(existingProgress);
             Log("Force End: " + targetState.GetDisplayName());
+            EndAndRemove(existingProgress);
         }
 
         public bool TrySkip(State targetState)
