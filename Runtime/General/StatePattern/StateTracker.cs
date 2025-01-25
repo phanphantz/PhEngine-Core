@@ -8,17 +8,51 @@ namespace PhEngine.Core
     [Serializable]
     public abstract class StateTracker
     {
+        [SerializeField] float timeRate = 1f;
+        
         public abstract void ForceEnd(State targetState);
+        protected float DeltaTime => Time.deltaTime * timeRate;
+    }
+
+    [Serializable]
+    public abstract class ParallelStateTracker<T> : StateTracker<T> where T : StateData
+    {
+        protected override void Update()
+        {
+            var runningStates = RunningStates;
+            foreach (var progress in runningStates)
+                TryPassTimeAndUpdate(progress);
+
+            foreach (var state in runningStates)
+                TryEnd(state);
+        }
+    }
+
+    [Serializable]
+    public abstract class QueuedStateTracker<T> : StateTracker<T> where T : StateData
+    {
+        protected override void Update()
+        {
+            if (StateCount == 0)
+                return;
+
+            var currentState = FirstStateInList;
+            TryPassTimeAndUpdate(currentState);
+            TryEnd(currentState);
+        }
     }
     
     [Serializable]
     public abstract class StateTracker<T> : StateTracker where T : StateData
     {
-        [SerializeField] float timeRate = 1f;
+        public int StateCount => runningStateList.Count;
         
-        StateProgress<T>[] RunningStates => runningStateList.ToArray();
+        protected StateProgress<T>[] RunningStates => runningStateList.ToArray();
         [SerializeField] List<StateProgress<T>> runningStateList = new List<StateProgress<T>>();
+
+        protected StateProgress<T> FirstStateInList => runningStateList.FirstOrDefault();
         
+        protected abstract void Update();
         public void Execute(State<T> state)
         {
             var progress = new StateProgress<T>(state);
@@ -36,23 +70,19 @@ namespace PhEngine.Core
 
         protected abstract T CreateInfo();
 
-        void Update()
+        protected bool TryEnd(StateProgress<T> state)
         {
-            var deltaTime = Time.deltaTime * timeRate;
-            var runningStates = RunningStates;
-            foreach (var progress in runningStates)
-            {
-                progress.PassTime(deltaTime);
-                progress.Update(PrepareInfo(progress));
-            }
+            if (!state.IsShouldEnd()) 
+                return false;
 
-            foreach (var state in runningStates)
-            {
-                if (!state.IsShouldEnd()) 
-                    continue;
+            EndAndRemove(state);
+            return true;
+        }
 
-                EndAndRemove(state);
-            }
+        protected void TryPassTimeAndUpdate(StateProgress<T> progress)
+        {
+            progress.PassTime(DeltaTime);
+            progress.Update(PrepareInfo(progress));
         }
 
         void EndAndRemove(StateProgress<T> progress)
