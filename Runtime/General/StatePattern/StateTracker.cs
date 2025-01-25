@@ -73,13 +73,13 @@ namespace PhEngine.Core
 
         protected T PrepareInfo(StateProgress<T> progress)
         {
-            var bareInfo = CreateInfo();
+            var bareInfo = CreateStateData(progress.State);
             bareInfo.tracker = this;
             bareInfo.elapsedTime = progress?.ElapsedTime ?? 0;
             return bareInfo;
         }
 
-        protected abstract T CreateInfo();
+        protected abstract T CreateStateData(State<T> state);
 
         protected bool TryEnd(StateProgress<T> progress)
         {
