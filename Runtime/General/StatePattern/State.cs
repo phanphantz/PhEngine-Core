@@ -5,33 +5,29 @@ namespace PhEngine.Core
     [Serializable]
     public abstract class State
     {
+        public StateData Data { get; internal set; }
         public virtual string GetDisplayName() => GetType().Name;
-    }
-    
-    [Serializable]
-    public abstract class State<T> : State  where T : StateData
-    {
-        public T Data { get; protected set; }
+
         public event Action OnStarted;
         
-        public void Start(T data)
+        public void Start(StateData data)
         {
             Data = data;
-            OnStart(Data);
+            OnStart(data);
             OnStarted?.Invoke();
         }
 
-        protected abstract void OnStart(T data);
+        protected abstract void OnStart(StateData data);
     }
     
     /// <summary>
     /// This type of state runs more than one frame
     /// </summary>
-    public abstract class LongState<T> : State<T> where T : StateData
+    public abstract class LongState : State
     {
         public event Action OnUpdated;
         public event Action OnEnded;
-        public void Update(T data)
+        public void Update(StateData data)
         {
             Data = data;
             OnUpdate(data);
@@ -43,16 +39,16 @@ namespace PhEngine.Core
         /// OnUpdated is first called after the frame that this state is started.
         /// </summary>
         /// <param name="data"></param>
-        protected abstract void OnUpdate(T data);
+        protected abstract void OnUpdate(StateData data);
 
-        public void End(T data)
+        public void End(StateData data)
         {
             Data = data;
             OnEnd(Data);
             OnEnded?.Invoke();
         }
 
-        protected abstract void OnEnd(T data);
+        protected abstract void OnEnd(StateData data);
         public void ForceEnd()
         {
             Data.tracker.ForceEnd(this);

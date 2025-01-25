@@ -4,10 +4,10 @@ using UnityEngine;
 namespace PhEngine.Core
 {
     [Serializable]
-    public class StateProgress<T> where T : StateData
+    public class StateProgress
     {
-        public State<T> State => state;
-        [SerializeReference] State<T> state;
+        public State State => state;
+        [SerializeReference] State state;
         
         public float ElapsedTime => elapsedTime;
         [SerializeField] float elapsedTime;
@@ -15,28 +15,28 @@ namespace PhEngine.Core
         public bool IsStarted => isStarted;
         [SerializeField] bool isStarted;
 
-        internal StateProgress(State<T> state)
+        internal StateProgress(State state)
         {
             this.state = state;
         }
 
-        internal void Start(T info)
+        internal void Start(StateData data)
         {
             isStarted = true;
-            state.Start(info);
+            state.Start(data);
         }
         
         internal void PassTime(float deltaTime)
         {
-            if (state is not LongState<T>)
+            if (state is not LongState)
                 return;
             
             elapsedTime += deltaTime;
         }
 
-        internal void Update(T info)
+        internal void Update(StateData info)
         {
-            if (state is not LongState<T> longState)
+            if (state is not LongState longState)
                 return;
 
             longState.Update(info);
@@ -53,9 +53,9 @@ namespace PhEngine.Core
             return state is ISingleFrameState;
         }
 
-        internal void End(T info)
+        internal void End(StateData info)
         {
-            if (state is LongState<T> longState)
+            if (state is LongState longState)
                 longState.End(info);
         }
     }

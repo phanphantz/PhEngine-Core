@@ -12,8 +12,6 @@ namespace PhEngine.Core
         [SerializeField] bool isLogging;
         [SerializeField] float timeRate = 1f;
         
-        public abstract void ForceEnd(State targetState);
-        public abstract bool TrySkip(State targetState);
         protected float DeltaTime => Time.deltaTime * timeRate;
 
         protected void Log(string message)
@@ -31,32 +29,28 @@ namespace PhEngine.Core
             
             Debug.LogError($"[{name}] {message}");
         }
-    }
-
-    [Serializable]
-    public abstract class StateTracker<T> : StateTracker where T : StateData
-    {
+        
         public int StateCount => runningStateList.Count;
         
-        protected StateProgress<T>[] RunningStates => runningStateList.ToArray();
-        [SerializeField] List<StateProgress<T>> runningStateList = new List<StateProgress<T>>();
+        protected StateProgress[] RunningStates => runningStateList.ToArray();
+        [SerializeField] List<StateProgress> runningStateList = new List<StateProgress>();
 
-        protected StateProgress<T> FirstStateInList => runningStateList.FirstOrDefault();
+        protected StateProgress FirstStateInList => runningStateList.FirstOrDefault();
 
-        public event Action<State<T>> OnStateStarted;
-        public event Action<State<T>> OnStateUpdated;
-        public event Action<State<T>> OnStateEnded;
+        public event Action<State> OnStateStarted;
+        public event Action<State> OnStateUpdated;
+        public event Action<State> OnStateEnded;
         public event Action OnFinishedAll;
         
         protected abstract void Update();
-        public virtual StateProgress<T> Append(State<T> state)
+        public virtual StateProgress Append(State state)
         {
-            var progress = new StateProgress<T>(state);
+            var progress = new StateProgress(state);
             runningStateList.Add(progress);
             return progress;
         }
 
-        protected void Execute(StateProgress<T> progress)
+        protected void Execute(StateProgress progress)
         {
             var state = progress.State;
             if (state is IUnsafeState unsafeState && !unsafeState.CheckSafeToRun(out var error))
@@ -71,17 +65,17 @@ namespace PhEngine.Core
             Log("Executed: " + state.GetDisplayName());
         }
 
-        protected T PrepareInfo(StateProgress<T> progress)
+        protected StateData PrepareInfo(StateProgress progress)
         {
-            var bareInfo = CreateStateData(progress.State);
-            bareInfo.tracker = this;
-            bareInfo.elapsedTime = progress?.ElapsedTime ?? 0;
+            var bareInfo = new StateData
+            {
+                tracker = this,
+                elapsedTime = progress?.ElapsedTime ?? 0
+            };
             return bareInfo;
         }
-
-        protected abstract T CreateStateData(State<T> state);
-
-        protected bool TryEnd(StateProgress<T> progress)
+        
+        protected bool TryEnd(StateProgress progress)
         {
             if (!progress.IsShouldEnd()) 
                 return false;
@@ -92,20 +86,20 @@ namespace PhEngine.Core
             return true;
         }
 
-        protected void TryPassTimeAndUpdate(StateProgress<T> progress)
+        protected void TryPassTimeAndUpdate(StateProgress progress)
         {
             progress.PassTime(DeltaTime);
             progress.Update(PrepareInfo(progress));
             OnStateUpdated?.Invoke(progress.State);
         }
 
-        void EndAndRemove(StateProgress<T> progress)
+        void EndAndRemove(StateProgress progress)
         {
             progress.End(PrepareInfo(progress));
             Remove(progress);
         }
 
-        void Remove(StateProgress<T> progress)
+        void Remove(StateProgress progress)
         {
             runningStateList.Remove(progress);
             if (StateCount == 0)
@@ -115,7 +109,7 @@ namespace PhEngine.Core
             }
         }
 
-        public override void ForceEnd(State targetState)
+        public void ForceEnd(State targetState)
         {
             var existingProgress = runningStateList.FirstOrDefault(s => s.State == targetState);
             if (existingProgress == null)
@@ -125,7 +119,7 @@ namespace PhEngine.Core
             Log("Force End: " + targetState.GetDisplayName());
         }
 
-        public override bool TrySkip(State targetState)
+        public bool TrySkip(State targetState)
         {
             if (targetState is not ISkippableState)
             {

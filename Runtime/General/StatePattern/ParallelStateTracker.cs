@@ -3,7 +3,7 @@ using System;
 namespace PhEngine.Core
 {
     [Serializable]
-    public abstract class ParallelStateTracker<T> : StateTracker<T> where T : StateData
+    public abstract class ParallelStateTracker : StateTracker
     {
         protected override void Update()
         {
@@ -15,7 +15,7 @@ namespace PhEngine.Core
                 TryEnd(state);
         }
 
-        public override StateProgress<T> Append(State<T> state)
+        public override StateProgress Append(State state)
         {
             var progress = base.Append(state);
             Execute(progress);
